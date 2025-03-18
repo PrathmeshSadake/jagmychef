@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, Upload, X } from "lucide-react";
 
@@ -27,20 +27,20 @@ interface Ingredient {
   unit: string;
 }
 
-interface Tag {
+interface Category {
+  id: string;
   name: string;
 }
 
 interface Recipe {
   id?: string;
   name: string;
-  cuisine?: string;
   description?: string;
   prepTime?: string;
-  tags?: Tag[];
   image?: string;
   ingredients: Ingredient[];
   instructions: string[];
+  categories?: Category[];
 }
 
 interface RecipeFormProps {
@@ -55,12 +55,36 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
   const [instructions, setInstructions] = useState<string[]>(
     recipe?.instructions || [""]
   );
-  const [tags, setTags] = useState<string[]>(
-    recipe?.tags?.map((tag: Tag) => tag.name) || []
-  );
-  const [tagInput, setTagInput] = useState<string>("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>(recipe?.image || "");
+
+  // Categories state
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<Category[]>(
+    recipe?.categories || []
+  );
+  const [categoryLoading, setCategoryLoading] = useState<boolean>(true);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
+
+  // Fetch categories from API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch("/api/categories");
+        if (!response.ok) {
+          throw new Error("Failed to fetch categories");
+        }
+        const data = await response.json();
+        setCategories(data);
+        setCategoryLoading(false);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        setCategoryLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const addIngredient = () => {
     setIngredients([...ingredients, { name: "", quantity: "", unit: "" }]);
@@ -94,18 +118,25 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
     setInstructions(newInstructions);
   };
 
-  const addTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && tagInput.trim()) {
-      e.preventDefault();
-      if (!tags.includes(tagInput.trim())) {
-        setTags([...tags, tagInput.trim()]);
-      }
-      setTagInput("");
+  const addCategory = () => {
+    if (!selectedCategoryId) return;
+
+    const categoryToAdd = categories.find(
+      (cat) => cat.id === selectedCategoryId
+    );
+    if (
+      categoryToAdd &&
+      !selectedCategories.some((cat) => cat.id === categoryToAdd.id)
+    ) {
+      setSelectedCategories([...selectedCategories, categoryToAdd]);
     }
+    setSelectedCategoryId("");
   };
 
-  const removeTag = (tagToRemove: string) => {
-    setTags(tags.filter((tag) => tag !== tagToRemove));
+  const removeCategory = (categoryId: string) => {
+    setSelectedCategories(
+      selectedCategories.filter((cat) => cat.id !== categoryId)
+    );
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,9 +168,9 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
       formData.append("instruction", instruction);
     });
 
-    // Add tags to formData
-    tags.forEach((tag) => {
-      formData.append("tags", tag);
+    // Add categories to formData
+    selectedCategories.forEach((category) => {
+      formData.append("categoryIds", category.id);
     });
 
     // Handle image upload if there's a new image
@@ -167,18 +198,6 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
       // Handle error state here
     }
   };
-
-  // Define cuisine options for better type safety and reusability
-  const cuisineOptions = [
-    { value: "italian", label: "Italian" },
-    { value: "mexican", label: "Mexican" },
-    { value: "indian", label: "Indian" },
-    { value: "chinese", label: "Chinese" },
-    { value: "japanese", label: "Japanese" },
-    { value: "american", label: "American" },
-    { value: "mediterranean", label: "Mediterranean" },
-    { value: "thai", label: "Thai" },
-  ];
 
   // Define measurement units for better type safety and reusability
   const unitOptions = [
@@ -209,19 +228,54 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
             </div>
 
             <div className='grid gap-3'>
-              <Label htmlFor='cuisine'>Cuisine Type</Label>
-              <Select name='cuisine' defaultValue={recipe?.cuisine || ""}>
-                <SelectTrigger id='cuisine'>
-                  <SelectValue placeholder='Select cuisine type' />
-                </SelectTrigger>
-                <SelectContent>
-                  {cuisineOptions.map((cuisine) => (
-                    <SelectItem key={cuisine.value} value={cuisine.value}>
-                      {cuisine.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Categories</Label>
+              <div className='flex flex-wrap gap-2 mb-2'>
+                {selectedCategories.map((category) => (
+                  <Badge
+                    key={category.id}
+                    variant='secondary'
+                    className='px-3 py-1 flex items-center gap-1'
+                  >
+                    {category.name}
+                    <button
+                      type='button'
+                      onClick={() => removeCategory(category.id)}
+                      className='ml-1 rounded-full'
+                      aria-label={`Remove ${category.name} category`}
+                    >
+                      <X className='h-3 w-3' />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+              <div className='flex gap-2'>
+                <Select
+                  value={selectedCategoryId}
+                  onValueChange={setSelectedCategoryId}
+                  disabled={categoryLoading}
+                >
+                  <SelectTrigger id='category-select'>
+                    <SelectValue placeholder='Select a category' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='icon'
+                  onClick={addCategory}
+                  disabled={!selectedCategoryId}
+                  aria-label='Add category'
+                >
+                  <Plus className='h-4 w-4' />
+                </Button>
+              </div>
             </div>
 
             <div className='grid gap-3'>
@@ -245,53 +299,6 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                 placeholder='30'
                 defaultValue={recipe?.prepTime || ""}
               />
-            </div>
-
-            <div className='grid gap-3'>
-              <Label>Tags</Label>
-              <div className='flex flex-wrap gap-2 mb-2'>
-                {tags.map((tag, index) => (
-                  <Badge
-                    key={index}
-                    variant='secondary'
-                    className='px-3 py-1 flex items-center gap-1'
-                  >
-                    {tag}
-                    <button
-                      type='button'
-                      onClick={() => removeTag(tag)}
-                      className='ml-1 rounded-full'
-                      aria-label={`Remove ${tag} tag`}
-                    >
-                      <X className='h-3 w-3' />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-              <div className='flex gap-2'>
-                <Input
-                  placeholder='Add a tag (press Enter)'
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={addTag}
-                />
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='icon'
-                  onClick={() => {
-                    if (tagInput.trim()) {
-                      if (!tags.includes(tagInput.trim())) {
-                        setTags([...tags, tagInput.trim()]);
-                      }
-                      setTagInput("");
-                    }
-                  }}
-                  aria-label='Add tag'
-                >
-                  <Plus className='h-4 w-4' />
-                </Button>
-              </div>
             </div>
 
             <div className='grid gap-3'>

@@ -56,169 +56,116 @@ export async function uploadImage(file: File) {
 
 // Function to create a new recipe
 export async function createRecipe(formData: FormData) {
-  const name = formData.get("name") as string;
-  const cuisine = formData.get("cuisine") as string;
-  const description = formData.get("description") as string;
-  const prepTime = formData.get("prepTime") as string;
-  let image = formData.get("image") as string | File;
-
-  // Parse ingredients and instructions from form data
-  const ingredientNames = formData.getAll("ingredientName") as string[];
-  const ingredientQuantities = formData.getAll(
-    "ingredientQuantity"
-  ) as string[];
-  const ingredientUnits = formData.getAll("ingredientUnit") as string[];
-  const instructions = formData.getAll("instruction") as string[];
-  const tags = formData.getAll("tags") as string[];
-
-  // Process image if it's a File
-  let imageUrl = typeof image === "string" ? image : "";
-  if (image instanceof File && image.size > 0) {
-    imageUrl = await uploadImage(image);
-  }
-
-  const ingredients = ingredientNames.map((name, index) => ({
-    name,
-    quantity: ingredientQuantities[index],
-    unit: ingredientUnits[index],
-  }));
-
   try {
-    // Validate data
-    const validatedData = recipeSchema.parse({
-      name,
-      cuisine,
-      description,
-      prepTime,
-      image: imageUrl,
-      instructions,
-      ingredients,
-      tags,
-    });
+    const name = formData.get("name") as string;
+    const description = formData.get("description") as string;
+    const prepTime = formData.get("prepTime") as string;
+    const image = formData.get("image") as string;
 
-    // Create recipe in database
+    // Get arrays from form data
+    const ingredientNames = formData.getAll("ingredientName") as string[];
+    const ingredientQuantities = formData.getAll(
+      "ingredientQuantity"
+    ) as string[];
+    const ingredientUnits = formData.getAll("ingredientUnit") as string[];
+    const instructions = formData.getAll("instruction") as string[];
+    const categoryIds = formData.getAll("categoryIds") as string[];
+
+    // Validate required fields
+    if (!name) {
+      return { success: false, error: "Recipe name is required" };
+    }
+
+    // Create recipe with ingredients and categories
     const recipe = await prisma.recipe.create({
       data: {
-        name: validatedData.name,
-        cuisine: validatedData.cuisine,
-        description: validatedData.description,
-        prepTime: validatedData.prepTime,
-        image: validatedData.image,
-        instructions: validatedData.instructions,
+        name,
+        description,
+        prepTime,
+        image,
+        instructions,
         ingredients: {
-          create: validatedData.ingredients.map((ingredient) => ({
-            name: ingredient.name,
-            quantity: ingredient.quantity,
-            unit: ingredient.unit,
+          create: ingredientNames.map((name, index) => ({
+            name,
+            quantity: ingredientQuantities[index],
+            unit: ingredientUnits[index],
           })),
         },
-        tags: {
-          create: tags.map((tag) => ({
-            name: tag,
-          })),
+        categories: {
+          connect: categoryIds.map((id) => ({ id })),
         },
       },
     });
 
-    // revalidatePath("/admin");
-    // redirect("/admin");
+    return { success: true, recipe };
   } catch (error) {
-    console.log(error);
-    if (error instanceof z.ZodError) {
-      return { success: false, error: error.errors };
-    }
-
+    console.error("Error in createRecipe:", error);
     return { success: false, error: "Failed to create recipe" };
   }
 }
 
 // Function to update an existing recipe
-export async function updateRecipe(recipeId: string, formData: FormData) {
-  const name = formData.get("name") as string;
-  const cuisine = formData.get("cuisine") as string;
-  const description = formData.get("description") as string;
-  const prepTime = formData.get("prepTime") as string;
-  let image = formData.get("image") as string | File;
 
-  // Parse ingredients and instructions from form data
-  const ingredientNames = formData.getAll("ingredientName") as string[];
-  const ingredientQuantities = formData.getAll(
-    "ingredientQuantity"
-  ) as string[];
-  const ingredientUnits = formData.getAll("ingredientUnit") as string[];
-  const instructions = formData.getAll("instruction") as string[];
-  const tags = formData.getAll("tags") as string[];
-
-  // Process image if it's a File
-  let imageUrl = typeof image === "string" ? image : "";
-  if (image instanceof File && image.size > 0) {
-    imageUrl = await uploadImage(image);
-  }
-
-  const ingredients = ingredientNames.map((name, index) => ({
-    name,
-    quantity: ingredientQuantities[index],
-    unit: ingredientUnits[index],
-  }));
-
+export async function updateRecipe(formData: FormData) {
   try {
-    // Validate data
-    const validatedData = recipeSchema.parse({
-      name,
-      cuisine,
-      description,
-      prepTime,
-      image: imageUrl,
-      instructions,
-      ingredients,
-      tags,
-    });
+    const id = formData.get("id") as string;
+    const name = formData.get("name") as string;
+    const description = formData.get("description") as string;
+    const prepTime = formData.get("prepTime") as string;
+    const image = formData.get("image") as string;
 
-    // First delete existing ingredients and tags to avoid duplicates
+    // Get arrays from form data
+    const ingredientNames = formData.getAll("ingredientName") as string[];
+    const ingredientQuantities = formData.getAll(
+      "ingredientQuantity"
+    ) as string[];
+    const ingredientUnits = formData.getAll("ingredientUnit") as string[];
+    const instructions = formData.getAll("instruction") as string[];
+    const categoryIds = formData.getAll("categoryIds") as string[];
+
+    // Validate required fields
+    if (!id || !name) {
+      return { success: false, error: "Recipe ID and name are required" };
+    }
+
+    // First delete existing ingredients to avoid duplicates
     await prisma.ingredient.deleteMany({
-      where: { recipeId },
+      where: { recipeId: id },
     });
 
-    await prisma.tags.deleteMany({
-      where: { recipe: { some: { id: recipeId } } },
-    });
-
-    // Update recipe in database
+    // Update recipe, ingredients, and categories
     const recipe = await prisma.recipe.update({
-      where: { id: recipeId },
+      where: { id },
       data: {
-        name: validatedData.name,
-        cuisine: validatedData.cuisine,
-        description: validatedData.description,
-        prepTime: validatedData.prepTime,
-        image: validatedData.image,
-        instructions: validatedData.instructions,
+        name,
+        description,
+        prepTime,
+        image,
+        instructions,
         ingredients: {
-          create: validatedData.ingredients.map((ingredient) => ({
-            name: ingredient.name,
-            quantity: ingredient.quantity,
-            unit: ingredient.unit,
+          create: ingredientNames.map((name, index) => ({
+            name,
+            quantity: ingredientQuantities[index],
+            unit: ingredientUnits[index],
           })),
         },
-        tags: {
-          create: tags.map((tag) => ({
-            name: tag,
-          })),
+        categories: {
+          set: [], // First disconnect all categories
+          connect: categoryIds.map((id) => ({ id })), // Then connect selected ones
         },
+      },
+      include: {
+        ingredients: true,
+        categories: true,
       },
     });
 
-    revalidatePath("/admin");
-    redirect("/admin");
+    return { success: true, recipe };
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return { success: false, error: error.errors };
-    }
-
+    console.error("Error in updateRecipe:", error);
     return { success: false, error: "Failed to update recipe" };
   }
 }
-
 export async function deleteRecipe(id: string) {
   try {
     await prisma.recipe.delete({
