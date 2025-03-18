@@ -7,10 +7,10 @@ export default function Home() {
   return (
     <div className='flex flex-col min-h-screen'>
       <header className='border-b'>
-        <div className='container flex items-center justify-between py-4'>
+        <div className='mx-auto container flex items-center justify-between py-4'>
           <div className='flex items-center gap-2'>
             <ChefHat className='h-6 w-6' />
-            <h1 className='text-xl font-bold'>RecipeHub</h1>
+            <h1 className='text-xl font-bold'>Jagmychef</h1>
           </div>
           <nav className='flex items-center gap-4'>
             <Link
@@ -35,7 +35,7 @@ export default function Home() {
       </header>
       <main className='flex-1'>
         <section className='py-12 md:py-24 lg:py-32 bg-muted'>
-          <div className='container px-4 md:px-6'>
+          <div className='mx-auto container px-4 md:px-6'>
             <div className='grid gap-6 lg:grid-cols-2 lg:gap-12 xl:grid-cols-2'>
               <div className='flex flex-col justify-center space-y-4'>
                 <div className='space-y-2'>
@@ -91,7 +91,7 @@ export default function Home() {
           </div>
         </section>
         <section className='py-12 md:py-24 lg:py-32'>
-          <div className='container px-4 md:px-6'>
+          <div className='mx-auto container px-4 md:px-6'>
             <div className='flex flex-col items-center justify-center space-y-4 text-center'>
               <div className='space-y-2'>
                 <h2 className='text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl'>
@@ -144,9 +144,9 @@ export default function Home() {
         </section>
       </main>
       <footer className='border-t py-6 md:py-0'>
-        <div className='container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row'>
+        <div className='mx-auto container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row'>
           <p className='text-sm text-muted-foreground'>
-            © {new Date().getFullYear()} RecipeHub. All rights reserved.
+            © {new Date().getFullYear()} Jagmychef. All rights reserved.
           </p>
           <nav className='flex items-center gap-4 text-sm'>
             <Link href='#' className='text-muted-foreground hover:underline'>

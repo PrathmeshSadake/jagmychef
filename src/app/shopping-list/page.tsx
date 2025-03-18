@@ -14,7 +14,7 @@ export default async function ShoppingListPage() {
   const shoppingList = await getShoppingList()
 
   return (
-    <div className="container py-10">
+    <div className="mx-auto container py-10">
       <div className="mb-6">
         <Link href="/recipes" className="flex items-center text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="mr-1 h-4 w-4" />
