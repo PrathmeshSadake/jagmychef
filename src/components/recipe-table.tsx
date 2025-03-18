@@ -116,13 +116,13 @@ export function RecipeTable({ recipes }: RecipeTableProps) {
                             Edit
                           </DropdownMenuItem>
                         </Link> */}
-                        <DropdownMenuItem
+                        {/* <DropdownMenuItem
                           onClick={() => confirmDelete(recipe.id)}
                           className='text-red-600'
                         >
                           <Trash2 className='mr-2 h-4 w-4' />
                           Delete
-                        </DropdownMenuItem>
+                        </DropdownMenuItem> */}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

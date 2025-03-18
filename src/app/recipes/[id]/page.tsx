@@ -8,11 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { getRecipeById } from "@/lib/data";
 import { ShoppingListButton } from "@/components/shopping-list-btn";
 
-export default async function RecipeDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function RecipeDetailPage({ params }: { params: any }) {
   const recipe: any = await getRecipeById(params.id);
 
   if (!recipe) {
