@@ -1,138 +1,158 @@
-"use client"
+// components/recipe-table.tsx
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { Edit, MoreHorizontal, Trash2 } from "lucide-react"
+import { useState } from "react";
+import Link from "next/link";
+import { Edit, Trash2, MoreHorizontal } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Recipe } from "@prisma/client";
 
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
-const recipes = [
-  {
-    id: "1",
-    name: "Spaghetti Carbonara",
-    cuisine: "Italian",
-    ingredients: 6,
-    createdAt: "2023-10-15",
-  },
-  {
-    id: "2",
-    name: "Chicken Tikka Masala",
-    cuisine: "Indian",
-    ingredients: 12,
-    createdAt: "2023-10-12",
-  },
-  {
-    id: "3",
-    name: "Beef Tacos",
-    cuisine: "Mexican",
-    ingredients: 8,
-    createdAt: "2023-10-10",
-  },
-  {
-    id: "4",
-    name: "Pad Thai",
-    cuisine: "Thai",
-    ingredients: 10,
-    createdAt: "2023-10-08",
-  },
-  {
-    id: "5",
-    name: "Caesar Salad",
-    cuisine: "American",
-    ingredients: 7,
-    createdAt: "2023-10-05",
-  },
-]
+interface RecipeTableProps {
+  recipes: Recipe[];
+}
 
-export function RecipeTable() {
-  const [searchTerm, setSearchTerm] = useState("")
+export function RecipeTable({ recipes }: RecipeTableProps) {
+  const router = useRouter();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [recipeToDelete, setRecipeToDelete] = useState<string | null>(null);
 
-  const filteredRecipes = recipes.filter(
-    (recipe) =>
-      recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      recipe.cuisine.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  const handleDelete = async () => {
+    if (!recipeToDelete) return;
+
+    try {
+      const response = await fetch(`/api/recipes/${recipeToDelete}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        // Refresh the page to show updated data
+        router.refresh();
+      } else {
+        console.error("Failed to delete recipe");
+      }
+    } catch (error) {
+      console.error("Error deleting recipe:", error);
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setRecipeToDelete(null);
+    }
+  };
+
+  const confirmDelete = (id: string) => {
+    console.log(id);
+    setRecipeToDelete(id);
+    setIsDeleteDialogOpen(true);
+  };
 
   return (
-    <div>
-      <div className="flex items-center py-4">
-        <Input
-          placeholder="Search recipes..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
-      </div>
-      <div className="rounded-md border">
+    <>
+      <div className='rounded-md border'>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-12">
-                <Checkbox />
-              </TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Cuisine</TableHead>
-              <TableHead>Ingredients</TableHead>
               <TableHead>Created</TableHead>
-              <TableHead className="w-12"></TableHead>
+              {/* <TableHead>Ingredients</TableHead> */}
+              <TableHead className='w-[100px]'>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredRecipes.map((recipe) => (
-              <TableRow key={recipe.id}>
-                <TableCell>
-                  <Checkbox />
-                </TableCell>
-                <TableCell>
-                  <Link href={`/admin/recipes/${recipe.id}`} className="font-medium hover:underline">
-                    {recipe.name}
-                  </Link>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline">{recipe.cuisine}</Badge>
-                </TableCell>
-                <TableCell>{recipe.ingredients}</TableCell>
-                <TableCell>{recipe.createdAt}</TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Open menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+            {recipes.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className='text-center py-6'>
+                  No recipes found. Add your first recipe!
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              recipes.map((recipe) => (
+                <TableRow key={recipe.id}>
+                  <TableCell className='font-medium'>{recipe.name}</TableCell>
+                  <TableCell>{recipe.cuisine}</TableCell>
+                  <TableCell>
+                    {new Date(recipe.createdAt).toLocaleDateString()}
+                  </TableCell>
+                  {/* <TableCell>{recipe.ingredients.length}</TableCell> */}
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant='ghost' className='h-8 w-8 p-0'>
+                          <span className='sr-only'>Open menu</span>
+                          <MoreHorizontal className='h-4 w-4' />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align='end'>
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        {/* <Link href={`/admin/recipes/${recipe.id}`}>
+                          <DropdownMenuItem>
+                            <Edit className='mr-2 h-4 w-4' />
+                            Edit
+                          </DropdownMenuItem>
+                        </Link> */}
+                        <DropdownMenuItem
+                          onClick={() => confirmDelete(recipe.id)}
+                          className='text-red-600'
+                        >
+                          <Trash2 className='mr-2 h-4 w-4' />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
-    </div>
-  )
-}
 
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              recipe and all its ingredients from your database.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className='bg-red-600'>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}

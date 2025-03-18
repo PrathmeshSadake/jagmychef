@@ -1,3 +1,4 @@
+// app/admin/page.tsx
 import Link from "next/link";
 import { Plus } from "lucide-react";
 
@@ -12,8 +13,84 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RecipeTable } from "@/components/recipe-table";
 import { IngredientTable } from "@/components/ingredient-table";
+import prisma from "@/lib/db";
 
-export default function AdminPage() {
+export default async function AdminPage() {
+  // Fetch recipes with ingredients count
+  const recipes = await prisma.recipe.findMany({
+    include: {
+      _count: {
+        select: { ingredients: true },
+      },
+      ingredients: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  // Fetch ingredients with their recipe names
+  const ingredients = await prisma.ingredient.findMany({
+    include: {
+      recipe: {
+        select: {
+          name: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  // Calculate stats
+  const totalRecipes = recipes.length;
+  const totalIngredients = ingredients.length;
+  const cuisineTypes = new Set(recipes.map((recipe) => recipe.cuisine)).size;
+
+  // Calculate recipes added this month
+  const now = new Date();
+  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const recipesThisMonth = recipes.filter(
+    (recipe) => new Date(recipe.createdAt) >= firstDayOfMonth
+  ).length;
+
+  // Calculate ingredients added this month
+  const ingredientsThisMonth = ingredients.filter(
+    (ingredient) => new Date(ingredient.createdAt) >= firstDayOfMonth
+  ).length;
+
+  // Get total user selections
+  const totalSelections = await prisma.selection.count();
+
+  // Get selections from last month for percentage calculation
+  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const selectionsLastMonth = await prisma.selection.count({
+    where: {
+      createdAt: {
+        gte: lastMonth,
+        lt: firstDayOfMonth,
+      },
+    },
+  });
+
+  // Calculate percentage change
+  const selectionsThisMonth = await prisma.selection.count({
+    where: {
+      createdAt: {
+        gte: firstDayOfMonth,
+      },
+    },
+  });
+
+  const selectionPercentChange =
+    selectionsLastMonth > 0
+      ? Math.round(
+          ((selectionsThisMonth - selectionsLastMonth) / selectionsLastMonth) *
+            100
+        )
+      : 0;
+
   return (
     <div className='mx-auto container py-10'>
       <div className='flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4'>
@@ -39,9 +116,9 @@ export default function AdminPage() {
             <CardTitle className='text-sm font-medium'>Total Recipes</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>142</div>
+            <div className='text-2xl font-bold'>{totalRecipes}</div>
             <p className='text-xs text-muted-foreground mt-1'>
-              +6 added this month
+              +{recipesThisMonth} added this month
             </p>
           </CardContent>
         </Card>
@@ -52,9 +129,9 @@ export default function AdminPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>358</div>
+            <div className='text-2xl font-bold'>{totalIngredients}</div>
             <p className='text-xs text-muted-foreground mt-1'>
-              +12 added this month
+              +{ingredientsThisMonth} added this month
             </p>
           </CardContent>
         </Card>
@@ -63,7 +140,7 @@ export default function AdminPage() {
             <CardTitle className='text-sm font-medium'>Cuisine Types</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>18</div>
+            <div className='text-2xl font-bold'>{cuisineTypes}</div>
             <p className='text-xs text-muted-foreground mt-1'>
               Across all recipes
             </p>
@@ -76,9 +153,12 @@ export default function AdminPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>1,204</div>
+            <div className='text-2xl font-bold'>
+              {totalSelections.toLocaleString()}
+            </div>
             <p className='text-xs text-muted-foreground mt-1'>
-              +28% from last month
+              {selectionPercentChange > 0 ? "+" : ""}
+              {selectionPercentChange}% from last month
             </p>
           </CardContent>
         </Card>
@@ -99,7 +179,7 @@ export default function AdminPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <RecipeTable />
+                <RecipeTable recipes={recipes} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -112,7 +192,7 @@ export default function AdminPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <IngredientTable />
+                <IngredientTable ingredients={ingredients} />
               </CardContent>
             </Card>
           </TabsContent>

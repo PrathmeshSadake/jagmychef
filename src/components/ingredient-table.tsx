@@ -1,133 +1,152 @@
-"use client"
+// components/ingredient-table.tsx
+"use client";
 
-import { useState } from "react"
-import { Edit, MoreHorizontal, Trash2 } from "lucide-react"
+import { useState } from "react";
+import { Trash2, MoreHorizontal } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Ingredient } from "@prisma/client";
 
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
-const ingredients = [
-  {
-    id: "1",
-    name: "Flour",
-    category: "Baking",
-    defaultUnit: "g",
-    usedInRecipes: 24,
-  },
-  {
-    id: "2",
-    name: "Olive Oil",
-    category: "Oils",
-    defaultUnit: "ml",
-    usedInRecipes: 42,
-  },
-  {
-    id: "3",
-    name: "Chicken Breast",
-    category: "Meat",
-    defaultUnit: "g",
-    usedInRecipes: 18,
-  },
-  {
-    id: "4",
-    name: "Garlic",
-    category: "Vegetables",
-    defaultUnit: "cloves",
-    usedInRecipes: 56,
-  },
-  {
-    id: "5",
-    name: "Salt",
-    category: "Spices",
-    defaultUnit: "g",
-    usedInRecipes: 78,
-  },
-]
+interface IngredientTableProps {
+  ingredients: (Ingredient & { recipe: { name: string } })[];
+}
 
-export function IngredientTable() {
-  const [searchTerm, setSearchTerm] = useState("")
+export function IngredientTable({ ingredients }: IngredientTableProps) {
+  const router = useRouter();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [ingredientToDelete, setIngredientToDelete] = useState<string | null>(
+    null
+  );
 
-  const filteredIngredients = ingredients.filter(
-    (ingredient) =>
-      ingredient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ingredient.category.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  const handleDelete = async () => {
+    if (!ingredientToDelete) return;
+
+    try {
+      const response = await fetch(`/api/ingredients/${ingredientToDelete}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        // Refresh the page to show updated data
+        router.refresh();
+      } else {
+        console.error("Failed to delete ingredient");
+      }
+    } catch (error) {
+      console.error("Error deleting ingredient:", error);
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setIngredientToDelete(null);
+    }
+  };
+
+  const confirmDelete = (id: string) => {
+    setIngredientToDelete(id);
+    setIsDeleteDialogOpen(true);
+  };
 
   return (
-    <div>
-      <div className="flex items-center py-4">
-        <Input
-          placeholder="Search ingredients..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
-      </div>
-      <div className="rounded-md border">
+    <>
+      <div className='rounded-md border'>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-12">
-                <Checkbox />
-              </TableHead>
               <TableHead>Name</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Default Unit</TableHead>
-              <TableHead>Used In</TableHead>
-              <TableHead className="w-12"></TableHead>
+              <TableHead>Quantity</TableHead>
+              <TableHead>Unit</TableHead>
+              <TableHead>Recipe</TableHead>
+              <TableHead className='w-[100px]'>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredIngredients.map((ingredient) => (
-              <TableRow key={ingredient.id}>
-                <TableCell>
-                  <Checkbox />
-                </TableCell>
-                <TableCell className="font-medium">{ingredient.name}</TableCell>
-                <TableCell>
-                  <Badge variant="outline">{ingredient.category}</Badge>
-                </TableCell>
-                <TableCell>{ingredient.defaultUnit}</TableCell>
-                <TableCell>{ingredient.usedInRecipes} recipes</TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Open menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+            {ingredients.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className='text-center py-6'>
+                  No ingredients found.
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              ingredients.map((ingredient) => (
+                <TableRow key={ingredient.id}>
+                  <TableCell className='font-medium'>
+                    {ingredient.name}
+                  </TableCell>
+                  <TableCell>{ingredient.quantity}</TableCell>
+                  <TableCell>{ingredient.unit}</TableCell>
+                  <TableCell>{ingredient.recipe.name}</TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant='ghost' className='h-8 w-8 p-0'>
+                          <span className='sr-only'>Open menu</span>
+                          <MoreHorizontal className='h-4 w-4' />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align='end'>
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem
+                          onClick={() => confirmDelete(ingredient.id)}
+                          className='text-red-600'
+                        >
+                          <Trash2 className='mr-2 h-4 w-4' />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
-    </div>
-  )
-}
 
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete this
+              ingredient from your database.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className='bg-red-600'>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
