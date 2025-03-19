@@ -37,8 +37,8 @@ export default async function RecipeDetailPage({ params }: { params: any }) {
         </Link>
       </div>
 
-      <div className='grid md:grid-cols-3 gap-8'>
-        <div className='md:col-span-2 space-y-6'>
+      <div className='grid gap-8'>
+        <div className='space-y-6'>
           <div>
             <h1 className='text-3xl font-bold tracking-tight'>{recipe.name}</h1>
             <div className='flex items-center gap-2 mt-2'>

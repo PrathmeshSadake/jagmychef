@@ -107,6 +107,12 @@ export default async function AdminPage() {
               Add New Recipe
             </Button>
           </Link>
+          <Link href='/admin/categories'>
+            <Button className='gap-1'>
+              <Plus className='h-4 w-4' />
+              Manage Categories
+            </Button>
+          </Link>
         </div>
       </div>
 

@@ -60,7 +60,7 @@ export async function createRecipe(formData: FormData) {
     const name = formData.get("name") as string;
     const description = formData.get("description") as string;
     const prepTime = formData.get("prepTime") as string;
-    const image = formData.get("image") as string;
+    const image = formData.get("image") as string | File;
 
     // Get arrays from form data
     const ingredientNames = formData.getAll("ingredientName") as string[];
@@ -75,14 +75,18 @@ export async function createRecipe(formData: FormData) {
     if (!name) {
       return { success: false, error: "Recipe name is required" };
     }
-
+    // Process image if it's a File
+    let imageUrl = typeof image === "string" ? image : "";
+    if (image instanceof File && image.size > 0) {
+      imageUrl = await uploadImage(image);
+    }
     // Create recipe with ingredients and categories
     const recipe = await prisma.recipe.create({
       data: {
         name,
         description,
         prepTime,
-        image,
+        image: imageUrl,
         instructions,
         ingredients: {
           create: ingredientNames.map((name, index) => ({
@@ -112,7 +116,7 @@ export async function updateRecipe(formData: FormData) {
     const name = formData.get("name") as string;
     const description = formData.get("description") as string;
     const prepTime = formData.get("prepTime") as string;
-    const image = formData.get("image") as string;
+    const image = formData.get("image") as string | File;
 
     // Get arrays from form data
     const ingredientNames = formData.getAll("ingredientName") as string[];
@@ -128,6 +132,12 @@ export async function updateRecipe(formData: FormData) {
       return { success: false, error: "Recipe ID and name are required" };
     }
 
+    // Process image if it's a File
+    let imageUrl = typeof image === "string" ? image : "";
+    if (image instanceof File && image.size > 0) {
+      imageUrl = await uploadImage(image);
+    }
+
     // First delete existing ingredients to avoid duplicates
     await prisma.ingredient.deleteMany({
       where: { recipeId: id },
@@ -140,7 +150,7 @@ export async function updateRecipe(formData: FormData) {
         name,
         description,
         prepTime,
-        image,
+        image: imageUrl,
         instructions,
         ingredients: {
           create: ingredientNames.map((name, index) => ({
