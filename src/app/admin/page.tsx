@@ -23,6 +23,7 @@ export default async function AdminPage() {
         select: { ingredients: true },
       },
       ingredients: true,
+      categories: true,
     },
     orderBy: {
       createdAt: "desc",
@@ -46,7 +47,6 @@ export default async function AdminPage() {
   // Calculate stats
   const totalRecipes = recipes.length;
   const totalIngredients = ingredients.length;
-  const cuisineTypes = new Set(recipes.map((recipe) => recipe.cuisine)).size;
 
   // Calculate recipes added this month
   const now = new Date();
@@ -113,6 +113,12 @@ export default async function AdminPage() {
               Manage Categories
             </Button>
           </Link>
+          <Link href='/admin/units'>
+            <Button className='gap-1'>
+              <Plus className='h-4 w-4' />
+              Manage Units
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -141,17 +147,14 @@ export default async function AdminPage() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        {/* <Card>
           <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium'>Cuisine Types</CardTitle>
+            <CardTitle className='text-sm font-medium'>
+              Category Types
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold'>{cuisineTypes}</div>
-            <p className='text-xs text-muted-foreground mt-1'>
-              Across all recipes
-            </p>
-          </CardContent>
-        </Card>
+          <CardContent>{categories}</CardContent>
+        </Card> */}
         <Card>
           <CardHeader className='pb-2'>
             <CardTitle className='text-sm font-medium'>

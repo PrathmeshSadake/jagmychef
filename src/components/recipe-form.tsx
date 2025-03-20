@@ -19,6 +19,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 // Define proper types
 interface Ingredient {
@@ -30,6 +39,12 @@ interface Ingredient {
 interface Category {
   id: string;
   name: string;
+}
+
+interface Unit {
+  id: string;
+  name: string;
+  symbol: string;
 }
 
 interface Recipe {
@@ -65,6 +80,14 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
   const [categoryLoading, setCategoryLoading] = useState<boolean>(true);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
 
+  // Units state
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [unitsLoading, setUnitsLoading] = useState<boolean>(true);
+  const [newUnitName, setNewUnitName] = useState<string>("");
+  const [newUnitSymbol, setNewUnitSymbol] = useState<string>("");
+  const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
+  const [isUnitDialogOpen, setIsUnitDialogOpen] = useState<boolean>(false);
+
   // Fetch categories from API
   useEffect(() => {
     const fetchCategories = async () => {
@@ -83,6 +106,26 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
     };
 
     fetchCategories();
+  }, []);
+
+  // Fetch units from API
+  useEffect(() => {
+    const fetchUnits = async () => {
+      try {
+        const response = await fetch("/api/units");
+        if (!response.ok) {
+          throw new Error("Failed to fetch units");
+        }
+        const data = await response.json();
+        setUnits(data);
+        setUnitsLoading(false);
+      } catch (error) {
+        console.error("Error fetching units:", error);
+        setUnitsLoading(false);
+      }
+    };
+
+    fetchUnits();
   }, []);
 
   const addIngredient = () => {
@@ -150,6 +193,98 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
     }
   };
 
+  const handleAddUnit = async () => {
+    if (!newUnitName.trim() || !newUnitSymbol.trim()) return;
+
+    try {
+      const response = await fetch("/api/units", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: newUnitName.trim(),
+          symbol: newUnitSymbol.trim(),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to add unit");
+      }
+
+      const newUnit = await response.json();
+      setUnits([...units, newUnit]);
+      setNewUnitName("");
+      setNewUnitSymbol("");
+      setIsUnitDialogOpen(false);
+    } catch (error) {
+      console.error("Error adding unit:", error);
+    }
+  };
+
+  const handleUpdateUnit = async () => {
+    if (!editingUnit || !newUnitName.trim() || !newUnitSymbol.trim()) return;
+
+    try {
+      const response = await fetch("/api/units", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: editingUnit.id,
+          name: newUnitName.trim(),
+          symbol: newUnitSymbol.trim(),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update unit");
+      }
+
+      const updatedUnit = await response.json();
+      setUnits(
+        units.map((unit) => (unit.id === updatedUnit.id ? updatedUnit : unit))
+      );
+      setEditingUnit(null);
+      setNewUnitName("");
+      setNewUnitSymbol("");
+      setIsUnitDialogOpen(false);
+    } catch (error) {
+      console.error("Error updating unit:", error);
+    }
+  };
+
+  const handleDeleteUnit = async (unitId: string) => {
+    try {
+      const response = await fetch(`/api/units?id=${unitId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete unit");
+      }
+
+      setUnits(units.filter((unit) => unit.id !== unitId));
+    } catch (error) {
+      console.error("Error deleting unit:", error);
+    }
+  };
+
+  const openAddUnitDialog = () => {
+    setEditingUnit(null);
+    setNewUnitName("");
+    setNewUnitSymbol("");
+    setIsUnitDialogOpen(true);
+  };
+
+  const openEditUnitDialog = (unit: Unit) => {
+    setEditingUnit(unit);
+    setNewUnitName(unit.name);
+    setNewUnitSymbol(unit.symbol);
+    setIsUnitDialogOpen(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -197,18 +332,6 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
       // Handle error state here
     }
   };
-
-  // Define measurement units for better type safety and reusability
-  const unitOptions = [
-    { value: "g", label: "g" },
-    { value: "kg", label: "kg" },
-    { value: "ml", label: "ml" },
-    { value: "L", label: "L" },
-    { value: "tbsp", label: "tbsp" },
-    { value: "tsp", label: "tsp" },
-    { value: "cup", label: "cup" },
-    { value: "pcs", label: "pcs" },
-  ];
 
   return (
     <form onSubmit={handleSubmit} className='space-y-8'>
@@ -394,11 +517,21 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                       <SelectValue placeholder='Unit' />
                     </SelectTrigger>
                     <SelectContent>
-                      {unitOptions.map((unit) => (
-                        <SelectItem key={unit.value} value={unit.value}>
-                          {unit.label}
+                      {unitsLoading ? (
+                        <SelectItem value='loading' disabled>
+                          Loading...
                         </SelectItem>
-                      ))}
+                      ) : units.length === 0 ? (
+                        <SelectItem value='none' disabled>
+                          No units available
+                        </SelectItem>
+                      ) : (
+                        units.map((unit) => (
+                          <SelectItem key={unit.id} value={unit.symbol}>
+                            {unit.name} ({unit.symbol})
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -428,6 +561,118 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Units Management Section */}
+      <Card>
+        <CardContent className='pt-6'>
+          <div className='flex items-center justify-between mb-4'>
+            <h3 className='text-lg font-medium'>Unit Management</h3>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={openAddUnitDialog}
+            >
+              <Plus className='h-4 w-4 mr-2' />
+              Add Unit
+            </Button>
+          </div>
+
+          {unitsLoading ? (
+            <p>Loading units...</p>
+          ) : units.length === 0 ? (
+            <p className='text-muted-foreground'>
+              No units available. Add your first unit.
+            </p>
+          ) : (
+            <div className='grid gap-2'>
+              {units.map((unit) => (
+                <div
+                  key={unit.id}
+                  className='flex items-center justify-between border p-3 rounded-md'
+                >
+                  <div>
+                    <span className='font-medium'>{unit.name}</span>
+                    <span className='text-muted-foreground ml-2'>
+                      ({unit.symbol})
+                    </span>
+                  </div>
+                  <div className='flex gap-2'>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => openEditUnitDialog(unit)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      className='text-red-500'
+                      onClick={() => handleDeleteUnit(unit.id)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Unit Dialog */}
+      <Dialog open={isUnitDialogOpen} onOpenChange={setIsUnitDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {editingUnit ? "Edit Unit" : "Add New Unit"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingUnit
+                ? "Update the unit name and symbol."
+                : "Enter a name and symbol for the new unit."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className='grid gap-4 py-4'>
+            <div className='grid gap-2'>
+              <Label htmlFor='unit-name'>Name</Label>
+              <Input
+                id='unit-name'
+                placeholder='e.g. Gram'
+                value={newUnitName}
+                onChange={(e) => setNewUnitName(e.target.value)}
+              />
+            </div>
+            <div className='grid gap-2'>
+              <Label htmlFor='unit-symbol'>Symbol</Label>
+              <Input
+                id='unit-symbol'
+                placeholder='e.g. g'
+                value={newUnitSymbol}
+                onChange={(e) => setNewUnitSymbol(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type='button'
+              variant='outline'
+              onClick={() => setIsUnitDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type='button'
+              onClick={editingUnit ? handleUpdateUnit : handleAddUnit}
+            >
+              {editingUnit ? "Update" : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardContent className='pt-6'>

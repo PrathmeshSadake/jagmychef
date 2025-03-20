@@ -103,7 +103,7 @@ export function RecipeCard({
             aria-label={selected ? "Remove from selection" : "Add to selection"}
           />
         </div>
-        <div className='relative h-48 w-full'>
+        <div className='relative h-24 w-full'>
           <Image
             src={recipe.image || "/placeholder.svg?height=200&width=400"}
             alt={recipe.name}
