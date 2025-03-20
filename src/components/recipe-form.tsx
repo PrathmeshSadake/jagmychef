@@ -36,7 +36,6 @@ interface Recipe {
   id?: string;
   name: string;
   description?: string;
-  prepTime?: string;
   image?: string;
   ingredients: Ingredient[];
   instructions: string[];
@@ -290,18 +289,6 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
             </div>
 
             <div className='grid gap-3'>
-              <Label htmlFor='prepTime'>Preparation Time (minutes)</Label>
-              <Input
-                id='prepTime'
-                name='prepTime'
-                type='number'
-                min='0'
-                placeholder='30'
-                defaultValue={recipe?.prepTime || ""}
-              />
-            </div>
-
-            <div className='grid gap-3'>
               <Label htmlFor='recipe-image'>Recipe Image</Label>
               <div className='border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center relative'>
                 {imagePreview ? (
@@ -444,7 +431,7 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
 
       <Card>
         <CardContent className='pt-6'>
-          <h3 className='text-lg font-medium mb-4'>Instructions</h3>
+          <h3 className='text-lg font-medium mb-4'>Prep Instructions</h3>
           <div className='space-y-4'>
             {instructions.map((instruction, index) => (
               <div key={index} className='flex gap-3 items-start'>
