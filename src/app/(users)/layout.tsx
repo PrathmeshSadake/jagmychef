@@ -1,3 +1,4 @@
+import SearchBar from "@/components/search-bar";
 import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
 
@@ -9,6 +10,9 @@ const UsersLayout = async ({ children }: { children: React.ReactNode }) => {
         <Link href={"/shopping-list"}>
           <ShoppingBag />
         </Link>
+      </div>
+      <div>
+        <SearchBar />
       </div>
       {children}
     </div>

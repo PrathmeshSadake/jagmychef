@@ -33,14 +33,12 @@ export function ShoppingListButton({
 
       if (result.success) {
         setIsAdded(true);
-        toast.success("Ingredients added to your shopping list");
+        toast.success("Ingredients added to your menu");
       } else {
-        toast.error(
-          result.error || "Failed to add ingredients to shopping list"
-        );
+        toast.error(result.error || "Failed to add ingredients to menu");
       }
     } catch (error) {
-      console.error("Error adding to shopping list:", error);
+      console.error("Error adding to menu:", error);
       toast.error("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
@@ -61,12 +59,12 @@ export function ShoppingListButton({
       ) : isAdded ? (
         <>
           <Check className='h-4 w-4' />
-          Added to Shopping List
+          Added to Menu
         </>
       ) : (
         <>
           <Plus className='h-4 w-4' />
-          Add to Shopping List
+          Add to Menu
         </>
       )}
     </Button>

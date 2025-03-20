@@ -49,7 +49,7 @@ export function ShoppingListActions({
 
     // Add title
     doc.setFontSize(18);
-    doc.text("Shopping List", 14, 22);
+    doc.text("Menu", 14, 22);
     doc.setFontSize(12);
 
     // Prepare table data
