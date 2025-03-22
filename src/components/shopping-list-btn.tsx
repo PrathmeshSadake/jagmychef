@@ -1,42 +1,52 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Check, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useAtom } from "jotai";
 import { toast } from "sonner";
-import { addToSelection } from "@/lib/actions";
+import { Button } from "@/components/ui/button";
+import { Recipe, recipesDataAtom, selectedRecipeIdsAtom } from "@/lib/atoms";
 
 interface ShoppingListButtonProps {
-  recipeId: string;
-  ingredients: Array<{
-    name: string;
-    quantity: string;
-    unit: string;
-  }>;
+  recipe: Recipe;
 }
 
-export function ShoppingListButton({
-  recipeId,
-  ingredients,
-}: ShoppingListButtonProps) {
+export function ShoppingListButton({ recipe }: ShoppingListButtonProps) {
+  const [selectedRecipeIds, setSelectedRecipeIds] = useAtom(
+    selectedRecipeIdsAtom
+  );
+  const [recipesData, setRecipesData] = useAtom(recipesDataAtom);
   const [isLoading, setIsLoading] = useState(false);
   const [isAdded, setIsAdded] = useState(false);
 
+  // Check if recipe is already in selection
+  useEffect(() => {
+    setIsAdded(selectedRecipeIds.includes(recipe.id));
+  }, [selectedRecipeIds, recipe.id]);
+
   const handleAddToShoppingList = async () => {
-    if (isAdded || !ingredients || ingredients.length === 0) return;
+    if (isAdded || !recipe.ingredients || recipe.ingredients.length === 0)
+      return;
 
     setIsLoading(true);
     try {
-      // We'll use a userId of "default-user" for now
-      // In a real app, you'd get the current user's ID
-      const result = await addToSelection(recipeId, "default-user");
+      // Add recipe to atoms
+      setRecipesData((prev) => ({
+        ...prev,
+        [recipe.id]: recipe,
+      }));
 
-      if (result.success) {
-        setIsAdded(true);
-        toast.success("Ingredients added to your menu");
-      } else {
-        toast.error(result.error || "Failed to add ingredients to menu");
-      }
+      setSelectedRecipeIds((prev) => {
+        // Limit to maximum 4 recipes
+        if (prev.length >= 4) {
+          toast.error("You can only select up to 4 recipes at a time");
+          return prev;
+        }
+        return [...prev, recipe.id];
+      });
+
+      toast.success("Ingredients added to your menu");
+      setIsAdded(true);
     } catch (error) {
       console.error("Error adding to menu:", error);
       toast.error("An unexpected error occurred. Please try again.");

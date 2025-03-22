@@ -1,3 +1,4 @@
+import { ModalProvider } from "@/components/modal-provider";
 import SearchBar from "@/components/search-bar";
 import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
@@ -19,6 +20,7 @@ const UsersLayout = async ({ children }: { children: React.ReactNode }) => {
         <SearchBar />
       </div>
       {children}
+      <ModalProvider />
     </div>
   );
 };

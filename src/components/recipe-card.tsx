@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Plus, Check, Loader2 } from "lucide-react";
+import { useAtom } from "jotai";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -13,11 +15,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { addToSelection, removeFromSelection } from "@/lib/actions";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { recipesDataAtom, selectedRecipeIdsAtom } from "@/lib/atoms";
 
 interface RecipeCardProps {
   recipe: {
@@ -39,9 +38,22 @@ export function RecipeCard({
   maxSelections = 4,
   currentSelections = 0,
 }: RecipeCardProps) {
-  const [selected, setSelected] = useState(isSelected);
+  const [selected, setSelected] = useState<any>(isSelected);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+  const [selectedRecipeIds, setSelectedRecipeIds] = useAtom(
+    selectedRecipeIdsAtom
+  );
+  const [recipesData, setRecipesData] = useAtom(recipesDataAtom);
+
+  // Update local state when prop changes
+  useEffect(() => {
+    setSelected(isSelected);
+  }, [isSelected]);
+
+  // Also check atoms to ensure consistency
+  useEffect(() => {
+    setSelected(selectedRecipeIds.includes(recipe.id));
+  }, [selectedRecipeIds, recipe.id]);
 
   const handleSelection = async () => {
     setIsLoading(true);
@@ -49,19 +61,15 @@ export function RecipeCard({
     try {
       if (selected) {
         // Remove from selection
-        const result = await removeFromSelection(recipe.id, "default-user");
-        if (result.success) {
-          setSelected(false);
-          toast.success(`${recipe.name} has been removed from your selection.`);
-        } else {
-          toast.success(
-            result.error || "Failed to remove recipe from selection"
-          );
-        }
+        setSelectedRecipeIds((prev: any) =>
+          prev.filter((id: any) => id !== recipe.id)
+        );
+        toast.success(`${recipe.name} has been removed from your selection.`);
+        setSelected(false);
       } else {
         // Check if we've reached the maximum number of selections
-        if (currentSelections >= maxSelections && !selected) {
-          toast.success(
+        if (selectedRecipeIds.length >= maxSelections) {
+          toast.error(
             `You can only select up to ${maxSelections} recipes. Please remove a recipe before adding another.`
           );
           setIsLoading(false);
@@ -69,20 +77,18 @@ export function RecipeCard({
         }
 
         // Add to selection
-        const result = await addToSelection(recipe.id, "default-user");
-        if (result.success) {
-          setSelected(true);
-          toast.success(`${recipe.name} has been added to your selection.`);
-        } else {
-          toast.success(result.error || "Failed to add recipe to selection");
-        }
-      }
+        setRecipesData((prev: any) => ({
+          ...prev,
+          [recipe.id]: recipe,
+        }));
 
-      // Refresh the page to update the UI
-      router.refresh();
+        setSelectedRecipeIds((prev: any) => [...prev, recipe.id]);
+        toast.success(`${recipe.name} has been added to your selection.`);
+        setSelected(true);
+      }
     } catch (error) {
       console.error("Error updating selection:", error);
-      toast.success("An unexpected error occurred. Please try again.");
+      toast.error("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -98,7 +104,8 @@ export function RecipeCard({
             checked={selected}
             onCheckedChange={handleSelection}
             disabled={
-              isLoading || (!selected && currentSelections >= maxSelections)
+              isLoading ||
+              (!selected && selectedRecipeIds.length >= maxSelections)
             }
             aria-label={selected ? "Remove from selection" : "Add to selection"}
           />
@@ -136,7 +143,8 @@ export function RecipeCard({
           className='gap-1'
           onClick={handleSelection}
           disabled={
-            isLoading || (!selected && currentSelections >= maxSelections)
+            isLoading ||
+            (!selected && selectedRecipeIds.length >= maxSelections)
           }
         >
           {isLoading ? (

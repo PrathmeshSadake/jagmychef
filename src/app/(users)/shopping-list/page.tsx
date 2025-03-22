@@ -1,13 +1,11 @@
+// app/shopping-list/page.tsx
+"use client";
+
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { getSelectedRecipes, getShoppingList } from "@/lib/data";
 import { ShoppingListClient } from "@/components/shopping-list-client";
 
-export default async function ShoppingListPage() {
-  // Fetch data on the server
-  const selectedRecipes = await getSelectedRecipes();
-  const shoppingList = await getShoppingList();
-
+export default function ShoppingListPage() {
   return (
     <div className='mx-auto container py-10'>
       <div className='mb-6'>
@@ -29,10 +27,7 @@ export default async function ShoppingListPage() {
         </div>
       </div>
 
-      <ShoppingListClient
-        initialSelectedRecipes={selectedRecipes}
-        initialShoppingList={shoppingList as any}
-      />
+      <ShoppingListClient />
     </div>
   );
 }

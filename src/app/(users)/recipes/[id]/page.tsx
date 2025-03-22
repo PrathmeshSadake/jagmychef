@@ -132,10 +132,7 @@ export default async function RecipeDetailPage({ params }: { params: any }) {
               )}
             </ul>
             <Separator className='my-4' />
-            <ShoppingListButton
-              recipeId={recipe.id}
-              ingredients={recipe.ingredients}
-            />
+            <ShoppingListButton recipe={recipe} />
           </div>
 
           {/* <div className='bg-muted p-6 rounded-lg'>

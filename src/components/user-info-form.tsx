@@ -21,45 +21,24 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { CalendarIcon, Clock } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useUserFormDialog } from "@/hooks/user-user-form-hook";
 
-interface UserDetailsDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: () => void;
-}
-
-export function UserDetailsDialog({
-  isOpen,
-  onClose,
-  onSave,
-}: UserDetailsDialogProps) {
+export function UserDetailsDialog() {
+  const userFormDialog = useUserFormDialog();
   const [userDetails, setUserDetails] = useAtom(userDetailsAtom);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [date, setDate] = useState<Date | undefined>(undefined);
-  const [time, setTime] = useState<string>("");
-  const [errors, setErrors] = useState<Partial<UserDetails & { time: string }>>(
-    {}
-  );
-
-  const hours = Array.from({ length: 24 }, (_, i) => i);
-  const minutes = ["00", "15", "30", "45"];
+  const [errors, setErrors] = useState<Partial<UserDetails>>({});
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<UserDetails & { time: string }> = {};
+    const newErrors: Partial<UserDetails> = {};
 
     if (!name.trim()) {
       newErrors.name = "Name is required";
@@ -79,10 +58,6 @@ export function UserDetailsDialog({
       newErrors.date = "Date is required";
     }
 
-    if (!time) {
-      newErrors.time = "Time is required";
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -93,15 +68,19 @@ export function UserDetailsDialog({
         name,
         email,
         phoneNumber,
-        date: date ? format(date, "yyyy-MM-dd") : "",
-        time,
+        date: date ? format(date, "dd-MM-yyyy") : "",
       });
-      onSave();
+    }
+    if (userDetails) {
+      userFormDialog.onClose();
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog
+      open={userFormDialog.isOpen}
+      onOpenChange={!userDetails ? () => {} : userFormDialog.onClose}
+    >
       <DialogContent className='sm:max-w-[425px]'>
         <DialogHeader>
           <DialogTitle>Your Details</DialogTitle>
@@ -195,47 +174,6 @@ export function UserDetailsDialog({
             {errors.date && (
               <p className='col-span-3 col-start-2 text-sm text-red-500'>
                 {errors.date}
-              </p>
-            )}
-          </div>
-          <div className='grid grid-cols-4 items-center gap-4'>
-            <Label htmlFor='time' className='text-right'>
-              Time
-            </Label>
-            <div className='col-span-3'>
-              <Select value={time} onValueChange={setTime}>
-                <SelectTrigger className='w-full'>
-                  <SelectValue placeholder='Select a time'>
-                    <div className='flex items-center'>
-                      {time ? (
-                        <>
-                          <Clock className='mr-2 h-4 w-4' />
-                          {time}
-                        </>
-                      ) : (
-                        "Select a time"
-                      )}
-                    </div>
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {hours.map((hour) =>
-                    minutes.map((minute) => {
-                      const formattedHour = hour.toString().padStart(2, "0");
-                      const timeString = `${formattedHour}:${minute}`;
-                      return (
-                        <SelectItem key={timeString} value={timeString}>
-                          {timeString}
-                        </SelectItem>
-                      );
-                    })
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            {errors.time && (
-              <p className='col-span-3 col-start-2 text-sm text-red-500'>
-                {errors.time}
               </p>
             )}
           </div>

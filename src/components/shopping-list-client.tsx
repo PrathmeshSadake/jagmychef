@@ -1,52 +1,43 @@
+// components/shopping-list-client.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Trash2 } from "lucide-react";
+import { useAtom } from "jotai";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ShoppingListActions } from "@/components/shopping-list-actions";
+import {
+  selectedRecipeIdsAtom,
+  selectedRecipesAtom,
+  shoppingListAtom,
+  ShoppingListByCategory,
+} from "@/lib/atoms";
 
-// Define types for our data
-interface Recipe {
-  id: string;
-  name: string;
-}
-
-interface ShoppingItem {
-  name: string;
-  quantity: number;
-  unit: string;
-}
-
-interface ShoppingListByCategory {
-  [category: string]: ShoppingItem[];
-}
-
-interface ShoppingListClientProps {
-  initialSelectedRecipes: Recipe[];
-  initialShoppingList: ShoppingListByCategory;
-}
-
-export function ShoppingListClient({
-  initialSelectedRecipes,
-  initialShoppingList,
-}: ShoppingListClientProps) {
-  const [selectedRecipes] = useState<Recipe[]>(initialSelectedRecipes);
-  const [shoppingList] = useState<ShoppingListByCategory>(initialShoppingList);
-  const [checkedItems, setCheckedItems] = useState<Record<string, boolean[]>>(
-    () => {
-      // Initialize checked state for all items
-      const initialCheckedState: Record<string, boolean[]> = {};
-      Object.entries(initialShoppingList).forEach(([category, items]) => {
-        initialCheckedState[category] = items.map(() => false);
-      });
-      return initialCheckedState;
-    }
+export function ShoppingListClient() {
+  // Use Jotai atoms
+  const [selectedRecipeIds, setSelectedRecipeIds] = useAtom(
+    selectedRecipeIdsAtom
   );
+  const [selectedRecipes] = useAtom(selectedRecipesAtom);
+  const [shoppingList] = useAtom(shoppingListAtom);
+
+  const [checkedItems, setCheckedItems] = useState<Record<string, boolean[]>>(
+    {}
+  );
+
+  // Initialize checked state when shopping list changes
+  useEffect(() => {
+    const initialCheckedState: Record<string, boolean[]> = {};
+    Object.entries(shoppingList).forEach(([category, items]) => {
+      initialCheckedState[category] = items.map(() => false);
+    });
+    setCheckedItems(initialCheckedState);
+  }, [shoppingList]);
 
   // Handle checkbox change
   const handleCheckboxChange = (category: string, index: number): void => {
@@ -57,13 +48,21 @@ export function ShoppingListClient({
     });
   };
 
+  // Remove recipe from selection
+  const handleRemoveRecipe = (recipeId: string): void => {
+    setSelectedRecipeIds((prev: any) =>
+      prev.filter((id: any) => id !== recipeId)
+    );
+  };
+
   // Filter shopping list to only include unchecked items
   const getUncheckedItems = (): ShoppingListByCategory => {
     const uncheckedList: ShoppingListByCategory = {};
 
     Object.entries(shoppingList).forEach(([category, items]) => {
       const uncheckedItems = items.filter(
-        (_, index) => !checkedItems[category] || !checkedItems[category][index]
+        (_: any, index: any) =>
+          !checkedItems[category] || !checkedItems[category][index]
       );
 
       if (uncheckedItems.length > 0) {
@@ -74,18 +73,12 @@ export function ShoppingListClient({
     return uncheckedList;
   };
 
-  // Get selected recipe IDs for saving to database
-  const getSelectedRecipeIds = (): string[] => {
-    return selectedRecipes.map((recipe) => recipe.id);
-  };
-
   return (
     <>
       <div className='mb-3'>
-        {/* Pass only unchecked items and recipe IDs to ShoppingListActions */}
         <ShoppingListActions
           shoppingList={getUncheckedItems()}
-          selectedRecipeIds={getSelectedRecipeIds()}
+          selectedRecipeIds={selectedRecipeIds}
         />
       </div>
       <div className='grid gap-8'>
@@ -96,7 +89,7 @@ export function ShoppingListClient({
             </CardHeader>
             <CardContent>
               <ul className='space-y-3'>
-                {selectedRecipes.map((recipe) => (
+                {selectedRecipes.map((recipe: any) => (
                   <li
                     key={recipe.id}
                     className='flex justify-between items-center'
@@ -107,7 +100,12 @@ export function ShoppingListClient({
                     >
                       {recipe.name}
                     </Link>
-                    <Button variant='ghost' size='sm' className='h-8 w-8 p-0'>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      className='h-8 w-8 p-0'
+                      onClick={() => handleRemoveRecipe(recipe.id)}
+                    >
                       <Trash2 className='h-4 w-4' />
                     </Button>
                   </li>
@@ -157,7 +155,7 @@ export function ShoppingListClient({
                     <h3 className='font-medium text-lg mb-2'>{category}</h3>
                     <Separator className='mb-3' />
                     <ul className='space-y-2'>
-                      {items.map((item, index) => (
+                      {items.map((item: any, index: any) => (
                         <li
                           key={index}
                           className='flex items-center justify-between'
