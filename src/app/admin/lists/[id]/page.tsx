@@ -19,11 +19,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
-export default async function ListDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function ListDetailPage({ params }: { params: any }) {
   const list = await prisma.list.findUnique({
     where: {
       id: params.id,
