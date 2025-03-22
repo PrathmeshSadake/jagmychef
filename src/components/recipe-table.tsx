@@ -78,7 +78,7 @@ export function RecipeTable({ recipes }: RecipeTableProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>Cuisine</TableHead>
+              {/* <TableHead>Cuisine</TableHead> */}
               <TableHead>Created</TableHead>
               {/* <TableHead>Ingredients</TableHead> */}
               <TableHead className='w-[100px]'>Actions</TableHead>
@@ -95,7 +95,7 @@ export function RecipeTable({ recipes }: RecipeTableProps) {
               recipes.map((recipe) => (
                 <TableRow key={recipe.id}>
                   <TableCell className='font-medium'>{recipe.name}</TableCell>
-                  <TableCell>{recipe.cuisine}</TableCell>
+                  {/* <TableCell>{recipe.cuisine}</TableCell> */}
                   <TableCell>
                     {new Date(recipe.createdAt).toLocaleDateString()}
                   </TableCell>
