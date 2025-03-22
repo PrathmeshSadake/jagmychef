@@ -70,7 +70,7 @@ export default function CategoriesAdmin() {
   const handleUpdateCategory = async (id: string) => {
     if (!editName.trim()) return setError("Category name is required");
     try {
-      const response = await fetch(`/api/categories/${id}`, {
+      const response = await fetch(`/api/categories/${id}?id=${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: editName }),
@@ -86,7 +86,7 @@ export default function CategoriesAdmin() {
   const handleDeleteCategory = async (id: string) => {
     if (!confirm("Are you sure you want to delete this category?")) return;
     try {
-      const response = await fetch(`/api/categories/${id}`, {
+      const response = await fetch(`/api/categories/${id}?id=${id}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Failed to delete category");

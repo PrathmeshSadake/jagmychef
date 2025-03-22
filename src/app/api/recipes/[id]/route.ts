@@ -1,29 +1,31 @@
 import prisma from "@/lib/db";
 import { NextResponse } from "next/server";
 
-// export async function DELETE(
-//   request: Request,
-//   { params }: { params: { id: string } }
-// ) {
-//   try {
-//     const id = await params.id;
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
 
-//     // Delete the recipe (ingredients will be deleted automatically due to onDelete: Cascade)
-//     await prisma.selection.deleteMany({
-//       where: {
-//         recipeId: id,
-//       },
-//     });
+    if (!id) {
+      return new NextResponse(null, { status: 500 });
+    }
 
-//     await prisma.recipe.delete({
-//       where: {
-//         id,
-//       },
-//     });
+    // Delete the recipe (ingredients will be deleted automatically due to onDelete: Cascade)
+    await prisma.selection.deleteMany({
+      where: {
+        recipeId: id,
+      },
+    });
 
-//     return new NextResponse(null, { status: 204 });
-//   } catch (error) {
-//     console.error("Error deleting recipe:", error);
-//     return new NextResponse("Internal Server Error", { status: 500 });
-//   }
-// }
+    await prisma.recipe.delete({
+      where: {
+        id,
+      },
+    });
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    console.error("Error deleting recipe:", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
+  }
+}

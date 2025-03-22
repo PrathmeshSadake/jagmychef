@@ -1,15 +1,19 @@
 import prisma from "@/lib/db";
 import { NextResponse } from "next/server";
 
-export async function GET(
-  request: Request,
-  { params }: { params: { name: string } }
-) {
+export async function GET(request: Request) {
   try {
-    const { name } = await params;
+    const { searchParams } = new URL(request.url);
+    const name = searchParams.get("name");
+
+    if (!name) {
+      return new NextResponse(null, { status: 500 });
+    }
+
+    const decodedName = decodeURIComponent(name as string);
 
     const category = await prisma.category.findFirst({
-      where: { name },
+      where: { name: decodedName },
       include: {
         recipes: {
           include: {

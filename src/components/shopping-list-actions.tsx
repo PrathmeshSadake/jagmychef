@@ -15,35 +15,9 @@ interface ShoppingListActionsProps {
 export function ShoppingListActions({
   shoppingList,
 }: ShoppingListActionsProps) {
-  const [isClearing, setIsClearing] = useState(false);
   const [userDetails] = useAtom(userDetailsAtom);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const router = useRouter();
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const handleDownload = () => {
-    // Create CSV content
-    let csvContent = "Category,Ingredient,Quantity,Unit\n";
-
-    Object.entries(shoppingList).forEach(([category, items]) => {
-      items.forEach((item) => {
-        csvContent += `${category},${item.name},${item.quantity},${item.unit}\n`;
-      });
-    });
-
-    // Create and download the file
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "shopping-list.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   const handlePdfDownload = async () => {
     // Dynamically import jsPDF to ensure it only loads on client side
@@ -78,27 +52,11 @@ export function ShoppingListActions({
     doc.save("shopping-list.pdf");
   };
 
-  const handleClearAll = async () => {
-    if (confirm("Are you sure you want to clear all selected recipes?")) {
-      setIsClearing(true);
-
-      try {
-        // In a real app, you would call an API to clear all selections
-        // For now, we'll just refresh the page
-        router.refresh();
-      } catch (error) {
-        console.error("Error clearing selections:", error);
-      } finally {
-        setIsClearing(false);
-      }
-    }
-  };
-
-  const handleClick = () => {
+  const handleDownload = () => {
     // Check if user details are available
     if (userDetails) {
       // Details exist, proceed directly
-      // onProceed();
+      handlePdfDownload();
     } else {
       // No details, open dialog
       setIsDialogOpen(true);
@@ -108,7 +66,7 @@ export function ShoppingListActions({
   const handleDialogSave = () => {
     setIsDialogOpen(false);
     // Now proceed with the action
-    // onProceed();
+    handlePdfDownload();
   };
 
   return (
@@ -117,25 +75,7 @@ export function ShoppingListActions({
         variant='outline'
         size='sm'
         className='gap-1'
-        onClick={handlePrint}
-      >
-        <Printer className='h-4 w-4' />
-        Print
-      </Button>
-      {/* <Button
-        variant='outline'
-        size='sm'
-        className='gap-1'
         onClick={handleDownload}
-      >
-        <Download className='h-4 w-4' />
-        CSV
-      </Button> */}
-      <Button
-        variant='outline'
-        size='sm'
-        className='gap-1'
-        onClick={handlePdfDownload}
       >
         <FileText className='h-4 w-4' />
         PDF

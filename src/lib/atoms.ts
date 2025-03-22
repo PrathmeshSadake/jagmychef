@@ -6,6 +6,8 @@ export interface UserDetails {
   name: string;
   email: string;
   phoneNumber: string;
+  date: any;
+  time: any;
 }
 
 // Using atomWithStorage to persist the state in localStorage
