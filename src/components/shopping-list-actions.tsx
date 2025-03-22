@@ -4,6 +4,9 @@ import { useState } from "react";
 import { Download, FileText, Printer, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { UserDetailsDialog } from "./user-info-form";
+import { userDetailsAtom } from "@/lib/atoms";
+import { useAtom } from "jotai";
 
 interface ShoppingListActionsProps {
   shoppingList: Record<string, any[]>;
@@ -13,6 +16,8 @@ export function ShoppingListActions({
   shoppingList,
 }: ShoppingListActionsProps) {
   const [isClearing, setIsClearing] = useState(false);
+  const [userDetails] = useAtom(userDetailsAtom);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const router = useRouter();
 
   const handlePrint = () => {
@@ -89,6 +94,23 @@ export function ShoppingListActions({
     }
   };
 
+  const handleClick = () => {
+    // Check if user details are available
+    if (userDetails) {
+      // Details exist, proceed directly
+      // onProceed();
+    } else {
+      // No details, open dialog
+      setIsDialogOpen(true);
+    }
+  };
+
+  const handleDialogSave = () => {
+    setIsDialogOpen(false);
+    // Now proceed with the action
+    // onProceed();
+  };
+
   return (
     <div className='flex items-center gap-2'>
       <Button
@@ -118,10 +140,11 @@ export function ShoppingListActions({
         <FileText className='h-4 w-4' />
         PDF
       </Button>
-      {/* <Button variant="destructive" size="sm" className="gap-1" onClick={handleClearAll} disabled={isClearing}>
-        <Trash2 className="h-4 w-4" />
-        Clear All
-      </Button> */}
+      <UserDetailsDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSave={handleDialogSave}
+      />
     </div>
   );
 }

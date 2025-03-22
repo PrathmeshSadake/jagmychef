@@ -118,17 +118,9 @@ export function RecipeCard({
         <div className='flex justify-between items-start'>
           <CardTitle className='text-lg line-clamp-1'>{recipe.name}</CardTitle>
         </div>
-        <div className='flex flex-wrap gap-2 mt-2'>
-          <Badge variant='outline'>{recipe.cuisine}</Badge>
-          {recipe.prepTime && (
-            <Badge variant='secondary' className='text-xs'>
-              {recipe.prepTime}
-            </Badge>
-          )}
-        </div>
       </CardHeader>
       <CardContent className='p-4 pt-2 flex-grow'>
-        <p className='text-sm text-muted-foreground line-clamp-2'>
+        <p className='text-sm text-white line-clamp-2'>
           {recipe.description ||
             "A delicious recipe with carefully selected ingredients."}
         </p>

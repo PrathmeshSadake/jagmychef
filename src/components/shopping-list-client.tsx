@@ -120,7 +120,7 @@ export function ShoppingListClient({
               )}
               {selectedRecipes.length > 0 && selectedRecipes.length < 4 && (
                 <div className='mt-4 p-3 bg-muted rounded-md'>
-                  <p className='text-sm text-muted-foreground'>
+                  <p className='text-sm text-white'>
                     You can select up to 4 recipes. Currently selected:{" "}
                     {selectedRecipes.length}
                   </p>
@@ -137,7 +137,7 @@ export function ShoppingListClient({
             <CardContent>
               {Object.keys(shoppingList).length === 0 ? (
                 <div className='text-center py-8'>
-                  <p className='text-muted-foreground mb-4'>
+                  <p className='text-white mb-4'>
                     No ingredients in your shopping list yet
                   </p>
                   <Link href='/recipes'>

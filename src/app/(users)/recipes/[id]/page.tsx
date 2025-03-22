@@ -138,7 +138,7 @@ export default async function RecipeDetailPage({ params }: { params: any }) {
             />
           </div>
 
-          <div className='bg-muted p-6 rounded-lg'>
+          {/* <div className='bg-muted p-6 rounded-lg'>
             <h2 className='text-xl font-semibold mb-2'>Nutrition Facts</h2>
             <p className='text-sm text-muted-foreground mb-4'>Per serving</p>
             <div className='space-y-2'>
@@ -170,7 +170,7 @@ export default async function RecipeDetailPage({ params }: { params: any }) {
                 </span>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

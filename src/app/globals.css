@@ -66,71 +66,81 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Black background with gold text theme */
+  --background: oklch(0.1 0 0); /* Deep black background */
+  --foreground: oklch(0.8 0.123 85.9); /* Gold text */
+  --card: oklch(0.15 0 0); /* Slightly lighter black for cards */
+  --card-foreground: oklch(0.8 0.123 85.9); /* Gold text on cards */
+  --popover: oklch(0.15 0 0); /* Match card color */
+  --popover-foreground: oklch(0.8 0.123 85.9); /* Gold text on popovers */
+  --primary: oklch(0.8 0.123 85.9); /* Gold primary (buttons) */
+  --primary-foreground: oklch(0.1 0 0); /* Black text on gold buttons */
+  --secondary: oklch(0.2 0 0); /* Dark gray for secondary elements */
+  --secondary-foreground: oklch(0.8 0.123 85.9); /* Gold text on secondary */
+  --muted: oklch(0.22 0 0); /* Very dark gray for muted elements */
+  --muted-foreground: oklch(0.7 0.1 85.9); /* Lighter gold for muted text */
+  --accent: oklch(0.2 0 0); /* Dark accent background */
+  --accent-foreground: oklch(0.8 0.123 85.9); /* Gold text on accent */
+  --destructive: oklch(0.577 0.245 27.325); /* Keep destructive */
+  --border: oklch(0.3 0 0); /* Dark gray borders */
+  --input: oklch(0.3 0 0); /* Dark gray input borders */
+  --ring: oklch(0.8 0.123 85.9); /* Gold focus rings */
+  --chart-1: oklch(0.8 0.123 85.9); /* Gold */
+  --chart-2: oklch(0.7 0.12 85.9); /* Slightly different gold */
+  --chart-3: oklch(0.6 0.11 85.9); /* Another gold shade */
+  --chart-4: oklch(0.5 0.1 85.9); /* Yet another gold shade */
+  --chart-5: oklch(0.4 0.09 85.9); /* Final gold shade */
+  --sidebar: oklch(0.08 0 0); /* Even darker black for sidebar */
+  --sidebar-foreground: oklch(0.8 0.123 85.9); /* Gold text in sidebar */
+  --sidebar-primary: oklch(0.8 0.123 85.9); /* Gold primary in sidebar */
+  --sidebar-primary-foreground: oklch(
+    0.1 0 0
+  ); /* Black text on gold in sidebar */
+  --sidebar-accent: oklch(0.2 0 0); /* Dark accent in sidebar */
+  --sidebar-accent-foreground: oklch(
+    0.8 0.123 85.9
+  ); /* Gold text on accent in sidebar */
+  --sidebar-border: oklch(0.3 0 0); /* Dark gray sidebar borders */
+  --sidebar-ring: oklch(0.8 0.123 85.9); /* Gold sidebar rings */
 }
 
+/* Dark theme is now our default, but keeping for system compatibility */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: oklch(0.1 0 0); /* Deep black background */
+  --foreground: oklch(0.8 0.123 85.9); /* Gold text */
+  --card: oklch(0.15 0 0); /* Slightly lighter black for cards */
+  --card-foreground: oklch(0.8 0.123 85.9); /* Gold text on cards */
+  --popover: oklch(0.15 0 0); /* Match card color */
+  --popover-foreground: oklch(0.8 0.123 85.9); /* Gold text on popovers */
+  --primary: oklch(0.8 0.123 85.9); /* Gold primary (buttons) */
+  --primary-foreground: oklch(0.1 0 0); /* Black text on gold buttons */
+  --secondary: oklch(0.2 0 0); /* Dark gray for secondary elements */
+  --secondary-foreground: oklch(0.8 0.123 85.9); /* Gold text on secondary */
+  --muted: oklch(0.22 0 0); /* Very dark gray for muted elements */
+  --muted-foreground: oklch(0.7 0.1 85.9); /* Lighter gold for muted text */
+  --accent: oklch(0.2 0 0); /* Dark accent background */
+  --accent-foreground: oklch(0.8 0.123 85.9); /* Gold text on accent */
+  --destructive: oklch(0.704 0.191 22.216); /* Keep destructive */
+  --border: oklch(0.3 0 0); /* Dark gray borders */
+  --input: oklch(0.3 0 0); /* Dark gray input borders */
+  --ring: oklch(0.8 0.123 85.9); /* Gold focus rings */
+  --chart-1: oklch(0.8 0.123 85.9); /* Gold */
+  --chart-2: oklch(0.7 0.12 85.9); /* Slightly different gold */
+  --chart-3: oklch(0.6 0.11 85.9); /* Another gold shade */
+  --chart-4: oklch(0.5 0.1 85.9); /* Yet another gold shade */
+  --chart-5: oklch(0.4 0.09 85.9); /* Final gold shade */
+  --sidebar: oklch(0.08 0 0); /* Even darker black for sidebar */
+  --sidebar-foreground: oklch(0.8 0.123 85.9); /* Gold text in sidebar */
+  --sidebar-primary: oklch(0.8 0.123 85.9); /* Gold primary in sidebar */
+  --sidebar-primary-foreground: oklch(
+    0.1 0 0
+  ); /* Black text on gold in sidebar */
+  --sidebar-accent: oklch(0.2 0 0); /* Dark accent in sidebar */
+  --sidebar-accent-foreground: oklch(
+    0.8 0.123 85.9
+  ); /* Gold text on accent in sidebar */
+  --sidebar-border: oklch(0.3 0 0); /* Dark gray sidebar borders */
+  --sidebar-ring: oklch(0.8 0.123 85.9); /* Gold sidebar rings */
 }
 
 @layer base {
