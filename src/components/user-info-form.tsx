@@ -77,7 +77,7 @@ export function UserDetailsDialog() {
 
   return (
     <Dialog
-      open={userFormDialog.isOpen}
+      open={!userDetails || userFormDialog.isOpen}
       onOpenChange={!userDetails ? () => {} : userFormDialog.onClose}
     >
       <DialogContent className='sm:max-w-[425px]'>

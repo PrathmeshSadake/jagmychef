@@ -20,9 +20,12 @@ export default function CategoriesPage() {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const router = useRouter();
-  console.log(userDetails);
+
   useEffect(() => {
-    if (userDetails) {
+    if (!userDetails) {
+      userFormDialog.onOpen();
+    } else {
+      userFormDialog.onClose();
       async function fetchCategories() {
         const response = await fetch("/api/categories");
         const data = await response.json();
@@ -30,8 +33,6 @@ export default function CategoriesPage() {
       }
 
       fetchCategories();
-    } else {
-      userFormDialog.onOpen();
     }
   }, [userDetails]);
 

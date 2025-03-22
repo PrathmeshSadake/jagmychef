@@ -42,10 +42,10 @@ export default async function RecipeDetailPage({ params }: { params: any }) {
           <div>
             <h1 className='text-3xl font-bold tracking-tight'>{recipe.name}</h1>
             <div className='flex items-center gap-2 mt-2'>
-              <Badge variant='outline'>{recipe.cuisine}</Badge>
-              <div className='flex items-center text-muted-foreground text-sm'>
-                <Clock className='mr-1 h-4 w-4' />
-                {recipe.prepTime || "30 mins"}
+              <div className='flex space-x-2 items-center'>
+                {recipe.categories?.map((i: any) => (
+                  <Badge key={i.name}>{i.name}</Badge>
+                ))}
               </div>
             </div>
           </div>

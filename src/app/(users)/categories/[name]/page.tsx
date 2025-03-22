@@ -51,7 +51,7 @@ export default function CategoryRecipesPage() {
 
               <div className='flex space-x-2 items-center'>
                 {recipe.categories?.map((i: any) => (
-                  <Badge>{i.name}</Badge>
+                  <Badge key={i.name}>{i.name}</Badge>
                 ))}
               </div>
 

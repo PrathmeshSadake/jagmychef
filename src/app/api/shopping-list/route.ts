@@ -6,14 +6,7 @@ export async function POST(request: NextRequest) {
     const data = await request.json();
     const { name, email, date, time, recipeIds } = data;
 
-    if (
-      !name ||
-      !email ||
-      !date ||
-      !time ||
-      !recipeIds ||
-      !Array.isArray(recipeIds)
-    ) {
+    if (!name || !email || !date || !recipeIds || !Array.isArray(recipeIds)) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -26,7 +19,6 @@ export async function POST(request: NextRequest) {
         name,
         email,
         Date: date, // Match the schema field name (capitalized)
-        Time: time, // Match the schema field name (capitalized)
         recipes: {
           connect: recipeIds.map((id: string) => ({ id })),
         },

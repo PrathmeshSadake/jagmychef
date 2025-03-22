@@ -62,7 +62,6 @@ model List {
   name String
   email String
   Date String
-  Time String
   recipes Recipe[]
 }
 
