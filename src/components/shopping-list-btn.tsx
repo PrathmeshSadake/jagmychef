@@ -31,12 +31,12 @@ export function ShoppingListButton({ recipe }: ShoppingListButtonProps) {
     setIsLoading(true);
     try {
       // Add recipe to atoms
-      setRecipesData((prev) => ({
+      setRecipesData((prev: any) => ({
         ...prev,
         [recipe.id]: recipe,
       }));
 
-      setSelectedRecipeIds((prev) => {
+      setSelectedRecipeIds((prev: any) => {
         // Limit to maximum 4 recipes
         if (prev.length >= 4) {
           toast.error("You can only select up to 4 recipes at a time");

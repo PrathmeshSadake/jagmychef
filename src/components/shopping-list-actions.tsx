@@ -309,11 +309,6 @@ export function ShoppingListActions({
         <Save className='h-4 w-4' />
         Save
       </Button>
-      <UserDetailsDialog
-        isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        onSave={handleDialogSave}
-      />
     </div>
   );
 }
