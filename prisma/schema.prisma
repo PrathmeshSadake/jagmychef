@@ -22,6 +22,7 @@ model Recipe {
   ingredients  Ingredient[]
   selections   Selection[]
   categories   Category[]
+  list List[]
 }
 
 model Category {
@@ -54,6 +55,15 @@ model Selection {
 
   @@index([userId])
   @@index([recipeId])
+}
+
+model List {
+  id        String   @id @default(cuid())
+  name String
+  email String
+  Date String
+  Time String
+  recipes Recipe[]
 }
 
 model Unit {

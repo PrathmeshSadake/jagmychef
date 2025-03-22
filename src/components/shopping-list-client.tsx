@@ -1,4 +1,3 @@
-// FILE: app/shopping-list/shopping-list-client.tsx (Client Component)
 "use client";
 
 import { useState } from "react";
@@ -75,11 +74,19 @@ export function ShoppingListClient({
     return uncheckedList;
   };
 
+  // Get selected recipe IDs for saving to database
+  const getSelectedRecipeIds = (): string[] => {
+    return selectedRecipes.map((recipe) => recipe.id);
+  };
+
   return (
     <>
       <div className='mb-3'>
-        {/* Pass only unchecked items to ShoppingListActions */}
-        <ShoppingListActions shoppingList={getUncheckedItems()} />
+        {/* Pass only unchecked items and recipe IDs to ShoppingListActions */}
+        <ShoppingListActions
+          shoppingList={getUncheckedItems()}
+          selectedRecipeIds={getSelectedRecipeIds()}
+        />
       </div>
       <div className='grid gap-8'>
         <div>
