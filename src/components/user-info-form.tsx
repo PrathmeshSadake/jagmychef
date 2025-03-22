@@ -70,8 +70,7 @@ export function UserDetailsDialog() {
         phoneNumber,
         date: date ? format(date, "dd-MM-yyyy") : "",
       });
-    }
-    if (userDetails) {
+
       userFormDialog.onClose();
     }
   };
