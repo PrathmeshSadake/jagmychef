@@ -30,7 +30,9 @@ export async function GET(request: Request) {
       );
     }
 
-    return NextResponse.json(category.recipes);
+    const recipes = category.recipes;
+
+    return NextResponse.json(recipes);
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to fetch recipes" },
