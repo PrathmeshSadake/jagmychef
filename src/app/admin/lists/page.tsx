@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
 
 export default async function ListsAdminPage() {
   const lists = await prisma.list.findMany({
@@ -44,7 +45,7 @@ export default async function ListsAdminPage() {
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Date</TableHead>
-                  <TableHead>Time</TableHead>
+                  <TableHead>Day</TableHead>
                   <TableHead>Recipes</TableHead>
                   <TableHead className='text-right'>Actions</TableHead>
                 </TableRow>
@@ -66,7 +67,7 @@ export default async function ListsAdminPage() {
                     <TableCell>
                       <div className='flex items-center gap-2'>
                         <ClockIcon className='h-4 w-4 text-muted-foreground' />
-                        <span>{list.Time}</span>
+                        <span>{format(list.Date, "EEEE")}</span>
                       </div>
                     </TableCell>
                     <TableCell>

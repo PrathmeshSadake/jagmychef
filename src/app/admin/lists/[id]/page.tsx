@@ -18,6 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { format } from "date-fns";
 
 export default async function ListDetailPage({ params }: { params: any }) {
   const list = await prisma.list.findUnique({
@@ -78,8 +79,8 @@ export default async function ListDetailPage({ params }: { params: any }) {
             <div className='space-y-1 flex items-center gap-2'>
               <ClockIcon className='h-4 w-4 text-muted-foreground' />
               <div>
-                <p className='text-sm text-muted-foreground'>Time</p>
-                <p className='font-medium'>{list.Time}</p>
+                <p className='text-sm text-muted-foreground'>Day</p>
+                <p className='font-medium'>{format(list.Date, "EEEE")}</p>
               </div>
             </div>
           </div>

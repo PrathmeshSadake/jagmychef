@@ -44,6 +44,8 @@ export default async function AdminPage() {
     },
   });
 
+  const listsCount = await prisma.list.count();
+
   // Calculate stats
   const totalRecipes = recipes.length;
   const totalIngredients = ingredients.length;
@@ -147,14 +149,20 @@ export default async function AdminPage() {
             </p>
           </CardContent>
         </Card>
-        {/* <Card>
+        <Card>
           <CardHeader className='pb-2'>
             <CardTitle className='text-sm font-medium'>
-              Category Types
+              Generated Lists
             </CardTitle>
           </CardHeader>
-          <CardContent>{categories}</CardContent>
-        </Card> */}
+          <CardContent>
+            {listsCount}
+
+            <div>
+              <Link href={"/admin/lists"}>View</Link>
+            </div>
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader className='pb-2'>
             <CardTitle className='text-sm font-medium'>
