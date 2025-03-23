@@ -28,7 +28,7 @@ export function ShoppingListActions({
   shoppingList,
   selectedRecipeIds = [],
 }: ShoppingListActionsProps) {
-  const [userDetails] = useAtom(userDetailsAtom);
+  const [userDetails, setUserDetails] = useAtom(userDetailsAtom);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [actionType, setActionType] = useState<"pdf" | "save">("pdf");
   const [isLoading, setIsLoading] = useState(false);
@@ -281,6 +281,9 @@ export function ShoppingListActions({
 
       toast.success("Shopping list saved successfully!");
       router.refresh(); // Refresh the page to show updated data
+
+      setUserDetails(null);
+      router.replace("/");
     } catch (error) {
       console.error("Error saving shopping list:", error);
       toast.error("Failed to save shopping list");
