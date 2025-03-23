@@ -6,8 +6,13 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const name = searchParams.get("name");
 
+    console.log(name);
+
     if (!name) {
-      return NextResponse.json(null, { status: 500 });
+      return NextResponse.json(
+        { message: "Missing Required Field" },
+        { status: 500 }
+      );
     }
 
     const decodedName = decodeURIComponent(name as string);
