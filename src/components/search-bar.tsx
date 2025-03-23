@@ -7,6 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useDebounce } from "@/hooks/use-debounce";
 import { SearchIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast, Toaster } from "sonner";
+import { useAtom } from "jotai";
+import { recipesDataAtom, selectedRecipeIdsAtom } from "@/lib/atoms";
 
 type SearchResult = {
   id: string;
@@ -18,8 +22,15 @@ type SearchResult = {
 export default function SearchBar() {
   const [searchTerm, setSearchTerm] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [selectedRecipeIds, setSelectedRecipeIds] = useAtom(
+    selectedRecipeIdsAtom
+  );
+  const [recipesData, setRecipesData] = useAtom(recipesDataAtom);
+  const [isAdded, setIsAdded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
+  const router = useRouter();
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -45,9 +56,45 @@ export default function SearchBar() {
     fetchResults();
   }, [debouncedSearchTerm]);
 
+  const handleAddToShoppingList = async (recipe: any) => {
+    if (selectedRecipeIds.includes(recipe.id)) return;
+
+    setIsLoading(true);
+    try {
+      // Add recipe to atoms
+      setRecipesData((prev: any) => ({
+        ...prev,
+        [recipe.id]: recipe,
+      }));
+
+      setSelectedRecipeIds((prev: any) => {
+        // Limit to maximum 4 recipes
+        if (prev.length >= 4) {
+          toast.error("You can only select up to 4 recipes at a time");
+          return prev;
+        }
+        return [...prev, recipe.id];
+      });
+
+      toast.success("Ingredients added to your menu");
+      setIsAdded(true);
+    } catch (error) {
+      console.error("Error adding to menu:", error);
+      toast.error("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleActionClick = (item: SearchResult) => {
     console.log("Action clicked for:", item.name, "ID:", item.id);
-    // Implement your action logic here
+
+    if (item.type == "category") {
+      router.push(`/categories/${item.name}`);
+    } else {
+      // router.push(`/recipes/${item.id}`);
+      handleAddToShoppingList(item);
+    }
   };
 
   return (
@@ -56,7 +103,7 @@ export default function SearchBar() {
         <SearchIcon className='absolute left-3 top-3 h-4 w-4 text-gray-400' />
         <Input
           type='text'
-          placeholder='Search recipes, categories, ingredients...'
+          placeholder='Search recipes, categories'
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className='pl-10 pr-4 py-2'
@@ -87,7 +134,7 @@ export default function SearchBar() {
                     size='sm'
                     onClick={() => handleActionClick(item)}
                   >
-                    Action
+                    {item.type == "category" ? "View" : "Add to Menu"}
                   </Button>
                 </li>
               ))}
