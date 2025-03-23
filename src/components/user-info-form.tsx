@@ -15,11 +15,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -35,6 +30,7 @@ export function UserDetailsDialog() {
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [date, setDate] = useState<Date | undefined>(undefined);
+  const [showCalendar, setShowCalendar] = useState(false);
   const [errors, setErrors] = useState<Partial<UserDetails>>({});
 
   const validateForm = (): boolean => {
@@ -73,6 +69,11 @@ export function UserDetailsDialog() {
 
       userFormDialog.onClose();
     }
+  };
+
+  const handleDateSelect = (selectedDate: Date | undefined) => {
+    setDate(selectedDate);
+    setShowCalendar(false);
   };
 
   return (
@@ -131,9 +132,7 @@ export function UserDetailsDialog() {
                 defaultCountry='US'
                 value={phoneNumber}
                 onChange={(value) => setPhoneNumber(value || "")}
-                className={
-                  "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-                }
+                className='file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]'
               />
             </div>
             {errors.phoneNumber && (
@@ -147,28 +146,18 @@ export function UserDetailsDialog() {
               Date
             </Label>
             <div className='col-span-3'>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant='outline'
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !date && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className='mr-2 h-4 w-4' />
-                    {date ? format(date, "PPP") : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className='w-auto p-0'>
-                  <Calendar
-                    mode='single'
-                    selected={date}
-                    onSelect={setDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <Button
+                type='button'
+                variant='outline'
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !date && "text-muted-foreground"
+                )}
+                onClick={() => setShowCalendar(!showCalendar)}
+              >
+                <CalendarIcon className='mr-2 h-4 w-4' />
+                {date ? format(date, "PPP") : <span>Pick a date</span>}
+              </Button>
             </div>
             {errors.date && (
               <p className='col-span-3 col-start-2 text-sm text-red-500'>
@@ -176,6 +165,33 @@ export function UserDetailsDialog() {
               </p>
             )}
           </div>
+
+          {/* Inline Calendar - Shows only when showCalendar is true */}
+          {showCalendar && (
+            <div className='grid grid-cols-4 items-center gap-4'>
+              <div className='col-span-3 col-start-2'>
+                <div className='border rounded-md p-3 bg-background'>
+                  <Calendar
+                    mode='single'
+                    selected={date}
+                    onSelect={handleDateSelect}
+                    initialFocus
+                    className='w-full'
+                  />
+                  <div className='mt-2 flex justify-end'>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      onClick={() => setShowCalendar(false)}
+                    >
+                      Close
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button onClick={handleSubmit}>Save</Button>
