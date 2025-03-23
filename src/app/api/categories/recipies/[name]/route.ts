@@ -7,7 +7,7 @@ export async function GET(request: Request) {
     const name = searchParams.get("name");
 
     if (!name) {
-      return new NextResponse(null, { status: 500 });
+      return NextResponse.json(null, { status: 500 });
     }
 
     const decodedName = decodeURIComponent(name as string);
