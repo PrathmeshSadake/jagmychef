@@ -12,6 +12,8 @@ export async function GET(request: Request) {
 
     const decodedName = decodeURIComponent(name as string);
 
+    console.log("decodedName", decodedName);
+
     const category = await prisma.category.findFirst({
       where: { name: decodedName },
       include: {
@@ -34,6 +36,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(recipes);
   } catch (error) {
+    console.log(error);
     return NextResponse.json(
       { error: "Failed to fetch recipes" },
       { status: 500 }
