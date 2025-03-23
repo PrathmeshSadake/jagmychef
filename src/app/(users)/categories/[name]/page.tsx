@@ -22,7 +22,7 @@ export default function CategoryRecipesPage() {
   useEffect(() => {
     async function fetchRecipes() {
       const response = await fetch(
-        `/api/categories/recipies/${name}?name=${encodeURIComponent(
+        `/api/categories/recipies/name?name=${encodeURIComponent(
           name as string
         )}`
       );
