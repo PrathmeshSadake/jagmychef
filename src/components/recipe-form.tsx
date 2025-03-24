@@ -563,7 +563,7 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
       </Card>
 
       {/* Units Management Section */}
-      <Card>
+      {/* <Card>
         <CardContent className='pt-6'>
           <div className='flex items-center justify-between mb-4'>
             <h3 className='text-lg font-medium'>Unit Management</h3>
@@ -621,10 +621,10 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
             </div>
           )}
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Unit Dialog */}
-      <Dialog open={isUnitDialogOpen} onOpenChange={setIsUnitDialogOpen}>
+      {/* <Dialog open={isUnitDialogOpen} onOpenChange={setIsUnitDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
@@ -672,7 +672,7 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
 
       <Card>
         <CardContent className='pt-6'>

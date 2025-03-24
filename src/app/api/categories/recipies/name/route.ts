@@ -38,6 +38,7 @@ export async function GET(request: Request) {
     }
 
     const recipes = category.recipes;
+    console.log(recipes);
 
     return NextResponse.json(recipes);
   } catch (error) {
