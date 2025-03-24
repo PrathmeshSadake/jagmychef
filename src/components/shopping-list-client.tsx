@@ -1,4 +1,3 @@
-// components/shopping-list-client.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -10,13 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ShoppingListActions } from "@/components/shopping-list-actions";
 import {
   selectedRecipeIdsAtom,
   selectedRecipesAtom,
   shoppingListAtom,
-  ShoppingListByCategory,
 } from "@/lib/atoms";
+import { ShoppingListActions } from "./shopping-list-actions";
 
 export function ShoppingListClient() {
   // Use Jotai atoms
@@ -24,29 +22,53 @@ export function ShoppingListClient() {
     selectedRecipeIdsAtom
   );
   const [selectedRecipes] = useAtom(selectedRecipesAtom);
-  const [shoppingList] = useAtom(shoppingListAtom);
+  const [shoppingList, setShoppingList] = useState<{
+    [category: string]: any[];
+  }>({});
+  const [checkedItems, setCheckedItems] = useState<{
+    [category: string]: boolean[];
+  }>({});
 
-  const [checkedItems, setCheckedItems] = useState<Record<string, boolean[]>>(
-    {}
-  );
-
-  // Initialize checked state when shopping list changes
+  // Fetch ingredients when selected recipes change
   useEffect(() => {
-    const initialCheckedState: Record<string, boolean[]> = {};
-    Object.entries(shoppingList).forEach(([category, items]) => {
-      initialCheckedState[category] = items.map(() => false);
-    });
-    setCheckedItems(initialCheckedState);
-  }, [shoppingList]);
+    const fetchIngredients = async () => {
+      if (selectedRecipeIds.length === 0) {
+        setShoppingList({});
+        return;
+      }
 
-  // Handle checkbox change
-  const handleCheckboxChange = (category: string, index: number): void => {
-    setCheckedItems((prev) => {
-      const updatedCategory = [...(prev[category] || [])];
-      updatedCategory[index] = !updatedCategory[index];
-      return { ...prev, [category]: updatedCategory };
-    });
-  };
+      try {
+        const response = await fetch("/api/ingredients", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ recipeIds: selectedRecipeIds }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch ingredients");
+        }
+
+        const ingredientsByCategory = await response.json();
+
+        // Initialize checked items state
+        const initialCheckedItems: { [category: string]: boolean[] } = {};
+        Object.entries(ingredientsByCategory).forEach(
+          ([category, items]: [any, any]) => {
+            initialCheckedItems[category] = new Array(items.length).fill(false);
+          }
+        );
+
+        setShoppingList(ingredientsByCategory);
+        setCheckedItems(initialCheckedItems);
+      } catch (error) {
+        console.error("Error fetching ingredients:", error);
+      }
+    };
+
+    fetchIngredients();
+  }, [selectedRecipeIds]);
 
   // Remove recipe from selection
   const handleRemoveRecipe = (recipeId: string): void => {
@@ -55,32 +77,24 @@ export function ShoppingListClient() {
     );
   };
 
-  // Filter shopping list to only include unchecked items
-  const getUncheckedItems = (): ShoppingListByCategory => {
-    const uncheckedList: ShoppingListByCategory = {};
-
-    Object.entries(shoppingList).forEach(([category, items]) => {
-      const uncheckedItems = items.filter(
-        (_: any, index: any) =>
-          !checkedItems[category] || !checkedItems[category][index]
-      );
-
-      if (uncheckedItems.length > 0) {
-        uncheckedList[category] = uncheckedItems;
-      }
+  // Handle checkbox toggle
+  const handleCheckboxChange = (category: string, index: number) => {
+    setCheckedItems((prev) => {
+      const updatedCategory = [...(prev[category] || [])];
+      updatedCategory[index] = !updatedCategory[index];
+      return {
+        ...prev,
+        [category]: updatedCategory,
+      };
     });
-
-    return uncheckedList;
   };
 
   return (
     <>
-      <div className='mb-3'>
-        <ShoppingListActions
-          shoppingList={getUncheckedItems()}
-          selectedRecipeIds={selectedRecipeIds}
-        />
-      </div>
+      <ShoppingListActions
+        shoppingList={shoppingList}
+        selectedRecipeIds={selectedRecipeIds}
+      />
       <div className='grid gap-8'>
         <div>
           <Card>
@@ -134,7 +148,7 @@ export function ShoppingListClient() {
             </CardContent>
           </Card>
         </div>
-        <div className=''>
+        <div>
           <Card>
             <CardHeader>
               <CardTitle>Ingredients</CardTitle>
@@ -142,7 +156,7 @@ export function ShoppingListClient() {
             <CardContent>
               {Object.keys(shoppingList).length === 0 ? (
                 <div className='text-center py-8'>
-                  <p className='text-white mb-4'>
+                  <p className='text-muted-foreground mb-4'>
                     No ingredients in your shopping list yet
                   </p>
                   <Link href='/recipes'>
@@ -155,9 +169,9 @@ export function ShoppingListClient() {
                     <h3 className='font-medium text-lg mb-2'>{category}</h3>
                     <Separator className='mb-3' />
                     <ul className='space-y-2'>
-                      {items.map((item: any, index: any) => (
+                      {items.map((item: any, index: number) => (
                         <li
-                          key={index}
+                          key={`${item.name}-${item.recipeId}`}
                           className='flex items-center justify-between'
                         >
                           <div className='flex items-center gap-2'>
@@ -174,6 +188,9 @@ export function ShoppingListClient() {
                             >
                               {item.name}
                             </label>
+                            <span className='text-xs text-muted-foreground ml-2'>
+                              (from {item.recipeName})
+                            </span>
                           </div>
                           <span className='text-sm text-muted-foreground'>
                             {item.quantity} {item.unit}

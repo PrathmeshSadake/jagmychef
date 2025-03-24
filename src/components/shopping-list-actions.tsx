@@ -5,7 +5,7 @@ import { Download, FileText, Printer, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { UserDetailsDialog } from "./user-info-form";
-import { userDetailsAtom } from "@/lib/atoms";
+import { selectedRecipeIdsAtom, userDetailsAtom } from "@/lib/atoms";
 import { useAtom } from "jotai";
 import { toast } from "sonner";
 
@@ -29,6 +29,7 @@ export function ShoppingListActions({
   selectedRecipeIds = [],
 }: ShoppingListActionsProps) {
   const [userDetails, setUserDetails] = useAtom(userDetailsAtom);
+  const [_, setSelectedRecipeIds] = useAtom(selectedRecipeIdsAtom);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [actionType, setActionType] = useState<"pdf" | "save">("pdf");
   const [isLoading, setIsLoading] = useState(false);
@@ -283,6 +284,7 @@ export function ShoppingListActions({
       router.refresh(); // Refresh the page to show updated data
 
       setUserDetails(null);
+      setSelectedRecipeIds([]);
       router.replace("/");
     } catch (error) {
       console.error("Error saving shopping list:", error);
