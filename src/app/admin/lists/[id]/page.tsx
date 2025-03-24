@@ -73,14 +73,18 @@ export default async function ListDetailPage({ params }: { params: any }) {
               <CalendarIcon className='h-4 w-4 text-muted-foreground' />
               <div>
                 <p className='text-sm text-muted-foreground'>Date</p>
-                <p className='font-medium'>{list.Date}</p>
+                <p className='font-medium'>
+                  {list.Date && format(list.Date, "dd-MMM-yyyy")}
+                </p>
               </div>
             </div>
             <div className='space-y-1 flex items-center gap-2'>
               <ClockIcon className='h-4 w-4 text-muted-foreground' />
               <div>
                 <p className='text-sm text-muted-foreground'>Day</p>
-                <p className='font-medium'>{format(list.Date, "EEEE")}</p>
+                <p className='font-medium'>
+                  {list.Date && format(list.Date, "EEEE")}
+                </p>
               </div>
             </div>
           </div>

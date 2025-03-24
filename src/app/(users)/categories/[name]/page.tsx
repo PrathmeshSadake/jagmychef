@@ -6,6 +6,14 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { RecipeCard } from "@/components/recipe-card";
+import { useAtom } from "jotai";
+import {
+  recipesDataAtom,
+  selectedRecipeIdsAtom,
+  selectedRecipesAtom,
+} from "@/lib/atoms";
+import { ArrowLeft } from "lucide-react";
 
 interface Recipe {
   id: string;
@@ -18,6 +26,9 @@ export default function CategoryRecipesPage() {
   const { name } = useParams();
   const decodedName = decodeURIComponent(name as string);
   const [recipes, setRecipes] = useState<any[]>([]);
+  const [recipesData, setRecipesData] = useAtom(recipesDataAtom);
+  const [selectedRecipeIds] = useAtom(selectedRecipeIdsAtom);
+  const [selectedRecipes] = useAtom(selectedRecipesAtom);
 
   useEffect(() => {
     async function fetchRecipes() {
@@ -35,40 +46,25 @@ export default function CategoryRecipesPage() {
 
   return (
     <div className='p-6'>
+      <div className='mb-6'>
+        <Link
+          href='/'
+          className='flex items-center text-sm text-muted-foreground hover:text-foreground'
+        >
+          <ArrowLeft className='mr-1 h-4 w-4' />
+          Back to Categories
+        </Link>
+      </div>
       <h1 className='text-2xl font-bold mb-4'>Recipes in {decodedName}</h1>
       <div className='grid gap-4'>
         {recipes.map((recipe) => (
-          <Card key={recipe.id} className='hover:shadow-lg transition'>
-            <CardContent className='p-6 space-y-2'>
-              {recipe.image && (
-                <img
-                  src={recipe.image}
-                  alt={recipe.name}
-                  className='w-full h-40 object-cover rounded-lg mb-4'
-                />
-              )}
-              <CardTitle>{recipe.name}</CardTitle>
-
-              <div className='flex space-x-2 items-center'>
-                {recipe.categories?.map((i: any) => (
-                  <Badge key={i.name}>{i.name}</Badge>
-                ))}
-              </div>
-
-              {recipe.description && (
-                <p className='text-sm text-gray-600'>{recipe.description}</p>
-              )}
-              <Link
-                href={`/recipes/${recipe.id}`}
-                className={buttonVariants({
-                  variant: "outline",
-                  size: "sm",
-                })}
-              >
-                View
-              </Link>
-            </CardContent>
-          </Card>
+          <RecipeCard
+            key={recipe.id}
+            recipe={recipe as any}
+            isSelected={selectedRecipeIds.includes(recipe.id)}
+            currentSelections={selectedRecipes.length}
+            maxSelections={4}
+          />
         ))}
       </div>
     </div>

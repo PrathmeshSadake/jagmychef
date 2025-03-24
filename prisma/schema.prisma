@@ -61,8 +61,10 @@ model List {
   id        String   @id @default(cuid())
   name String
   email String
-  Date String
+  Date DateTime
   recipes Recipe[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Unit {

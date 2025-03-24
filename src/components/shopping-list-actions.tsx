@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Download, FileText, Printer, Save } from "lucide-react";
+import { Download, FileText, Loader, Printer, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { UserDetailsDialog } from "./user-info-form";
 import { selectedRecipeIdsAtom, userDetailsAtom } from "@/lib/atoms";
 import { useAtom } from "jotai";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 interface ShoppingItem {
   name: string;
@@ -110,9 +111,17 @@ export function ShoppingListActions({
         doc.setFont("helvetica", "normal");
         doc.text(`Name: ${userDetails.name || ""}`, marginLeft, currentY);
         currentY += 6;
-        doc.text(`Date: ${userDetails.date || ""}`, marginLeft, currentY);
+        doc.text(
+          `Date: ${format(new Date(userDetails.date), "dd-MM-yyyy") || ""}`,
+          marginLeft,
+          currentY
+        );
         currentY += 6;
-        doc.text(`Time: ${userDetails.time || ""}`, marginLeft, currentY);
+        doc.text(
+          `Day: ${format(new Date(userDetails.date), "EEEE") || ""}`,
+          marginLeft,
+          currentY
+        );
         currentY += 10;
       } else {
         currentY += 10;
@@ -219,40 +228,6 @@ export function ShoppingListActions({
     }
   };
 
-  const handleDownload = () => {
-    setActionType("pdf");
-    // Check if user details are available
-    if (userDetails && Object.keys(userDetails).length > 0) {
-      // Details exist, proceed directly
-      handlePdfDownload();
-    } else {
-      // No details, open dialog
-      setIsDialogOpen(true);
-    }
-  };
-
-  const handleSaveClick = () => {
-    setActionType("save");
-    // Check if user details are available
-    if (userDetails && Object.keys(userDetails).length > 0) {
-      // Details exist, proceed directly
-      handleSaveToDatabase();
-    } else {
-      // No details, open dialog
-      setIsDialogOpen(true);
-    }
-  };
-
-  const handleDialogSave = () => {
-    setIsDialogOpen(false);
-    // Now proceed with the action based on type
-    if (actionType === "pdf") {
-      handlePdfDownload();
-    } else {
-      handleSaveToDatabase();
-    }
-  };
-
   const handleSaveToDatabase = async () => {
     try {
       if (!userDetails) {
@@ -280,9 +255,9 @@ export function ShoppingListActions({
         throw new Error(data.error || "Failed to save shopping list");
       }
 
-      toast.success("Shopping list saved successfully!");
-      router.refresh(); // Refresh the page to show updated data
+      await handlePdfDownload();
 
+      toast.success("Shopping list saved successfully!");
       setUserDetails(null);
       setSelectedRecipeIds([]);
       router.replace("/");
@@ -294,7 +269,7 @@ export function ShoppingListActions({
 
   return (
     <div className='flex items-center gap-2'>
-      <Button
+      {/* <Button
         variant='outline'
         size='sm'
         className='gap-1'
@@ -313,6 +288,13 @@ export function ShoppingListActions({
       >
         <Save className='h-4 w-4' />
         Save
+      </Button> */}
+      <Button className='w-full' onClick={handleSaveToDatabase}>
+        {isLoading ? (
+          <Loader className='h-4 w-5 animate-spin' />
+        ) : (
+          "Submit Menu and Download PDF"
+        )}
       </Button>
     </div>
   );

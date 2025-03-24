@@ -24,6 +24,9 @@ export default async function ListsAdminPage() {
         },
       },
     },
+    orderBy: {
+      createdAt: "desc",
+    },
   });
 
   return (
@@ -61,13 +64,13 @@ export default async function ListsAdminPage() {
                     <TableCell>
                       <div className='flex items-center gap-2'>
                         <CalendarIcon className='h-4 w-4 text-muted-foreground' />
-                        <span>{list.Date}</span>
+                        <span>{format(new Date(list.Date), "dd-MM-yyyy")}</span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className='flex items-center gap-2'>
                         <ClockIcon className='h-4 w-4 text-muted-foreground' />
-                        <span>{format(list.Date, "EEEE")}</span>
+                        <span>{format(new Date(list.Date), "EEEE")}</span>
                       </div>
                     </TableCell>
                     <TableCell>

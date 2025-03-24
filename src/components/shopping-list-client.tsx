@@ -91,10 +91,6 @@ export function ShoppingListClient() {
 
   return (
     <>
-      <ShoppingListActions
-        shoppingList={shoppingList}
-        selectedRecipeIds={selectedRecipeIds}
-      />
       <div className='grid gap-8'>
         <div>
           <Card>
@@ -204,6 +200,13 @@ export function ShoppingListClient() {
             </CardContent>
           </Card>
         </div>
+      </div>
+
+      <div className='my-6'>
+        <ShoppingListActions
+          shoppingList={shoppingList}
+          selectedRecipeIds={selectedRecipeIds}
+        />
       </div>
     </>
   );

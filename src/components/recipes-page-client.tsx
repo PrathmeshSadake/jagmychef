@@ -1,6 +1,6 @@
 "use client";
 
-import { Filter } from "lucide-react";
+import { ArrowLeft, Filter } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useAtom } from "jotai";
@@ -47,6 +47,15 @@ export default function RecipesPageClient({
 
   return (
     <div className='w-full container py-10 mx-auto'>
+      <div className='mb-6'>
+        <Link
+          href='/'
+          className='flex items-center text-sm text-muted-foreground hover:text-foreground'
+        >
+          <ArrowLeft className='mr-1 h-4 w-4' />
+          Back to Categories
+        </Link>
+      </div>
       <div className='flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4'>
         <div>
           <h1 className='text-3xl font-bold tracking-tight'>Recipes</h1>

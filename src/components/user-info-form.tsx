@@ -64,7 +64,7 @@ export function UserDetailsDialog() {
         name,
         email,
         phoneNumber,
-        date: date ? format(date, "dd-MM-yyyy") : "",
+        date: date ? date : Date.now(),
       });
 
       userFormDialog.onClose();
