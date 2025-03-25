@@ -1,6 +1,12 @@
 import prisma from "@/lib/db";
 import Link from "next/link";
-import { CalendarIcon, ClockIcon, Eye, ListIcon } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarIcon,
+  ClockIcon,
+  Eye,
+  ListIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -31,7 +37,16 @@ export default async function ListsAdminPage() {
 
   return (
     <div className='container mx-auto py-8 px-4 max-w-6xl'>
-      <div className='flex items-center justify-between mb-6'>
+      <div className='flex flex-col items-start justify-between mb-6'>
+        <div className='mb-6'>
+          <Link
+            href='/admin'
+            className='flex items-center text-sm text-muted-foreground hover:text-foreground'
+          >
+            <ArrowLeft className='mr-1 h-4 w-4' />
+            Back to Admin Dashboard
+          </Link>
+        </div>
         <h1 className='text-3xl font-bold'>Lists Admin</h1>
       </div>
 

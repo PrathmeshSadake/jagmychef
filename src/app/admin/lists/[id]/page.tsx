@@ -41,7 +41,7 @@ export default async function ListDetailPage({ params }: { params: any }) {
 
   return (
     <div className='container mx-auto py-8 px-4 max-w-6xl'>
-      <div className='mb-6'>
+      <div className='flex justify-between mb-6'>
         <Button
           variant='ghost'
           asChild
