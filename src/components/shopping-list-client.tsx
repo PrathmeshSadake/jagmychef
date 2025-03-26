@@ -6,7 +6,13 @@ import { Trash2 } from "lucide-react";
 import { useAtom } from "jotai";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -148,6 +154,9 @@ export function ShoppingListClient() {
           <Card>
             <CardHeader>
               <CardTitle>Ingredients</CardTitle>
+              <CardDescription>
+                Please check your pantry and fridge for available ingredients
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {Object.keys(shoppingList).length === 0 ? (

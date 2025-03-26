@@ -65,14 +65,12 @@ export default async function ListDetailPage({ params }: { params: any }) {
               <p className='text-sm text-muted-foreground'>Email</p>
               <p className='font-medium'>{list.email}</p>
             </div>
-            <div className='space-y-1'>
-              <p className='text-sm text-muted-foreground'>ID</p>
-              <p className='font-medium text-sm font-mono'>{list.id}</p>
-            </div>
             <div className='space-y-1 flex items-center gap-2'>
               <CalendarIcon className='h-4 w-4 text-muted-foreground' />
               <div>
-                <p className='text-sm text-muted-foreground'>Date</p>
+                <p className='text-sm text-muted-foreground'>
+                  Appointment Date
+                </p>
                 <p className='font-medium'>
                   {list.Date && format(list.Date, "dd-MMM-yyyy")}
                 </p>
@@ -81,7 +79,7 @@ export default async function ListDetailPage({ params }: { params: any }) {
             <div className='space-y-1 flex items-center gap-2'>
               <ClockIcon className='h-4 w-4 text-muted-foreground' />
               <div>
-                <p className='text-sm text-muted-foreground'>Day</p>
+                <p className='text-sm text-muted-foreground'>Appointment Day</p>
                 <p className='font-medium'>
                   {list.Date && format(list.Date, "EEEE")}
                 </p>

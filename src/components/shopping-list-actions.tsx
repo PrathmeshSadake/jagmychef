@@ -112,13 +112,17 @@ export function ShoppingListActions({
         doc.text(`Name: ${userDetails.name || ""}`, marginLeft, currentY);
         currentY += 6;
         doc.text(
-          `Date: ${format(new Date(userDetails.date), "dd-MM-yyyy") || ""}`,
+          `Appointment Date: ${
+            format(new Date(userDetails.date), "dd-MM-yyyy") || ""
+          }`,
           marginLeft,
           currentY
         );
         currentY += 6;
         doc.text(
-          `Day: ${format(new Date(userDetails.date), "EEEE") || ""}`,
+          `Appointment Day: ${
+            format(new Date(userDetails.date), "EEEE") || ""
+          }`,
           marginLeft,
           currentY
         );

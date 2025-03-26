@@ -59,11 +59,10 @@ export default async function ListsAdminPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className='w-[100px]'>ID</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Day</TableHead>
+                  <TableHead>Appointment Date</TableHead>
+                  <TableHead>Appointment Day</TableHead>
                   <TableHead>Recipes</TableHead>
                   <TableHead className='text-right'>Actions</TableHead>
                 </TableRow>
@@ -71,9 +70,6 @@ export default async function ListsAdminPage() {
               <TableBody>
                 {lists.map((list) => (
                   <TableRow key={list.id}>
-                    <TableCell className='font-mono text-xs text-muted-foreground'>
-                      {list.id.substring(0, 8)}...
-                    </TableCell>
                     <TableCell className='font-medium'>{list.name}</TableCell>
                     <TableCell>{list.email}</TableCell>
                     <TableCell>
