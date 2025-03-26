@@ -169,16 +169,16 @@ export function ShoppingListActions({
             currentY += 6;
 
             // Add calories on a separate line if available
-            if (item.calories) {
-              doc.setFont("helvetica", "italic");
-              doc.text(
-                `  (${item.calories} calories per serving)`,
-                marginLeft,
-                currentY
-              );
-              doc.setFont("helvetica", "normal");
-              currentY += 6;
-            }
+            // if (item.calories) {
+            //   doc.setFont("helvetica", "italic");
+            //   doc.text(
+            //     `  (${item.calories} calories per serving)`,
+            //     marginLeft,
+            //     currentY
+            //   );
+            //   doc.setFont("helvetica", "normal");
+            //   currentY += 6;
+            // }
           });
 
           // Add extra space after each category
