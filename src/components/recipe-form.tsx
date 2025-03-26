@@ -4,7 +4,7 @@ import type React from "react";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, Upload, X } from "lucide-react";
+import { Plus, Trash2, Upload, X, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -72,6 +72,10 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>(recipe?.image || "");
 
+  // Loading and submission states
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   // Categories state
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<Category[]>(
@@ -83,10 +87,6 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
   // Units state
   const [units, setUnits] = useState<Unit[]>([]);
   const [unitsLoading, setUnitsLoading] = useState<boolean>(true);
-  const [newUnitName, setNewUnitName] = useState<string>("");
-  const [newUnitSymbol, setNewUnitSymbol] = useState<string>("");
-  const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
-  const [isUnitDialogOpen, setIsUnitDialogOpen] = useState<boolean>(false);
 
   // Fetch categories from API
   useEffect(() => {
@@ -193,100 +193,10 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
     }
   };
 
-  const handleAddUnit = async () => {
-    if (!newUnitName.trim() || !newUnitSymbol.trim()) return;
-
-    try {
-      const response = await fetch("/api/units", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: newUnitName.trim(),
-          symbol: newUnitSymbol.trim(),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to add unit");
-      }
-
-      const newUnit = await response.json();
-      setUnits([...units, newUnit]);
-      setNewUnitName("");
-      setNewUnitSymbol("");
-      setIsUnitDialogOpen(false);
-    } catch (error) {
-      console.error("Error adding unit:", error);
-    }
-  };
-
-  const handleUpdateUnit = async () => {
-    if (!editingUnit || !newUnitName.trim() || !newUnitSymbol.trim()) return;
-
-    try {
-      const response = await fetch("/api/units", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: editingUnit.id,
-          name: newUnitName.trim(),
-          symbol: newUnitSymbol.trim(),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update unit");
-      }
-
-      const updatedUnit = await response.json();
-      setUnits(
-        units.map((unit) => (unit.id === updatedUnit.id ? updatedUnit : unit))
-      );
-      setEditingUnit(null);
-      setNewUnitName("");
-      setNewUnitSymbol("");
-      setIsUnitDialogOpen(false);
-    } catch (error) {
-      console.error("Error updating unit:", error);
-    }
-  };
-
-  const handleDeleteUnit = async (unitId: string) => {
-    try {
-      const response = await fetch(`/api/units?id=${unitId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete unit");
-      }
-
-      setUnits(units.filter((unit) => unit.id !== unitId));
-    } catch (error) {
-      console.error("Error deleting unit:", error);
-    }
-  };
-
-  const openAddUnitDialog = () => {
-    setEditingUnit(null);
-    setNewUnitName("");
-    setNewUnitSymbol("");
-    setIsUnitDialogOpen(true);
-  };
-
-  const openEditUnitDialog = (unit: Unit) => {
-    setEditingUnit(unit);
-    setNewUnitName(unit.name);
-    setNewUnitSymbol(unit.symbol);
-    setIsUnitDialogOpen(true);
-  };
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitError(null);
 
     const formData = new FormData(e.currentTarget);
 
@@ -322,19 +232,34 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to save recipe");
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to save recipe");
       }
 
-      // Redirect back to admin page after submission
+      // Redirect back to admin page after successful submission
       router.push("/admin");
     } catch (error) {
       console.error("Error saving recipe:", error);
-      // Handle error state here
+      setSubmitError(
+        error instanceof Error ? error.message : "An unexpected error occurred"
+      );
+      setIsSubmitting(false);
     }
   };
 
+  // Determine if the form can be submitted
+  const isFormValid =
+    ingredients.every((ing) => ing.name && ing.quantity && ing.unit) &&
+    instructions.every((inst) => inst.trim() !== "");
+
   return (
     <form onSubmit={handleSubmit} className='space-y-8'>
+      {submitError && (
+        <div className='bg-red-50 border border-red-200 text-red-800 p-4 rounded-md'>
+          {submitError}
+        </div>
+      )}
+
       <Card>
         <CardContent className='pt-6'>
           <div className='grid gap-6'>
@@ -346,6 +271,7 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                 placeholder='Enter recipe name'
                 defaultValue={recipe?.name || ""}
                 required
+                disabled={isSubmitting}
               />
             </div>
 
@@ -364,6 +290,7 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                       onClick={() => removeCategory(category.id)}
                       className='ml-1 rounded-full'
                       aria-label={`Remove ${category.name} category`}
+                      disabled={isSubmitting}
                     >
                       <X className='h-3 w-3' />
                     </button>
@@ -374,7 +301,7 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                 <Select
                   value={selectedCategoryId}
                   onValueChange={setSelectedCategoryId}
-                  disabled={categoryLoading}
+                  disabled={categoryLoading || isSubmitting}
                 >
                   <SelectTrigger id='category-select'>
                     <SelectValue placeholder='Select a category' />
@@ -392,7 +319,7 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                   variant='outline'
                   size='icon'
                   onClick={addCategory}
-                  disabled={!selectedCategoryId}
+                  disabled={!selectedCategoryId || isSubmitting}
                   aria-label='Add category'
                 >
                   <Plus className='h-4 w-4' />
@@ -408,6 +335,7 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                 placeholder='Enter recipe description'
                 defaultValue={recipe?.description || ""}
                 rows={3}
+                disabled={isSubmitting}
               />
             </div>
 
@@ -430,6 +358,7 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                         setImagePreview("");
                         setImageFile(null);
                       }}
+                      disabled={isSubmitting}
                     >
                       Remove Image
                     </Button>
@@ -455,6 +384,7 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                   accept='image/png,image/jpeg,image/webp'
                   id='recipe-image'
                   onChange={handleImageChange}
+                  disabled={isSubmitting}
                 />
                 {!imagePreview && (
                   <Button
@@ -465,6 +395,7 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                     onClick={() =>
                       document.getElementById("recipe-image")?.click()
                     }
+                    disabled={isSubmitting}
                   >
                     Select Image
                   </Button>
@@ -491,6 +422,7 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                     }
                     placeholder='e.g. Flour'
                     required
+                    disabled={isSubmitting}
                   />
                 </div>
                 <div className='grid gap-2 w-24'>
@@ -503,6 +435,7 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                     }
                     placeholder='e.g. 200'
                     required
+                    disabled={isSubmitting}
                   />
                 </div>
                 <div className='grid gap-2 w-24'>
@@ -512,6 +445,7 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                     onValueChange={(value) =>
                       updateIngredient(index, "unit", value)
                     }
+                    disabled={unitsLoading || isSubmitting}
                   >
                     <SelectTrigger id={`unit-${index}`}>
                       <SelectValue placeholder='Unit' />
@@ -541,7 +475,7 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                   size='icon'
                   className='mt-8'
                   onClick={() => removeIngredient(index)}
-                  disabled={ingredients.length === 1}
+                  disabled={ingredients.length === 1 || isSubmitting}
                   aria-label='Remove ingredient'
                 >
                   <Trash2 className='h-4 w-4' />
@@ -554,6 +488,7 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
               size='sm'
               className='mt-2'
               onClick={addIngredient}
+              disabled={isSubmitting}
             >
               <Plus className='h-4 w-4 mr-2' />
               Add Ingredient
@@ -561,119 +496,6 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
           </div>
         </CardContent>
       </Card>
-
-      {/* Units Management Section */}
-      {/* <Card>
-        <CardContent className='pt-6'>
-          <div className='flex items-center justify-between mb-4'>
-            <h3 className='text-lg font-medium'>Unit Management</h3>
-            <Button
-              type='button'
-              variant='outline'
-              size='sm'
-              onClick={openAddUnitDialog}
-            >
-              <Plus className='h-4 w-4 mr-2' />
-              Add Unit
-            </Button>
-          </div>
-
-          {unitsLoading ? (
-            <p>Loading units...</p>
-          ) : units.length === 0 ? (
-            <p className='text-muted-foreground'>
-              No units available. Add your first unit.
-            </p>
-          ) : (
-            <div className='grid gap-2'>
-              {units.map((unit) => (
-                <div
-                  key={unit.id}
-                  className='flex items-center justify-between border p-3 rounded-md'
-                >
-                  <div>
-                    <span className='font-medium'>{unit.name}</span>
-                    <span className='text-muted-foreground ml-2'>
-                      ({unit.symbol})
-                    </span>
-                  </div>
-                  <div className='flex gap-2'>
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='sm'
-                      onClick={() => openEditUnitDialog(unit)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='sm'
-                      className='text-red-500'
-                      onClick={() => handleDeleteUnit(unit.id)}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card> */}
-
-      {/* Unit Dialog */}
-      {/* <Dialog open={isUnitDialogOpen} onOpenChange={setIsUnitDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingUnit ? "Edit Unit" : "Add New Unit"}
-            </DialogTitle>
-            <DialogDescription>
-              {editingUnit
-                ? "Update the unit name and symbol."
-                : "Enter a name and symbol for the new unit."}
-            </DialogDescription>
-          </DialogHeader>
-          <div className='grid gap-4 py-4'>
-            <div className='grid gap-2'>
-              <Label htmlFor='unit-name'>Name</Label>
-              <Input
-                id='unit-name'
-                placeholder='e.g. Gram'
-                value={newUnitName}
-                onChange={(e) => setNewUnitName(e.target.value)}
-              />
-            </div>
-            <div className='grid gap-2'>
-              <Label htmlFor='unit-symbol'>Symbol</Label>
-              <Input
-                id='unit-symbol'
-                placeholder='e.g. g'
-                value={newUnitSymbol}
-                onChange={(e) => setNewUnitSymbol(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              type='button'
-              variant='outline'
-              onClick={() => setIsUnitDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type='button'
-              onClick={editingUnit ? handleUpdateUnit : handleAddUnit}
-            >
-              {editingUnit ? "Update" : "Save"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog> */}
-
       <Card>
         <CardContent className='pt-6'>
           <h3 className='text-lg font-medium mb-4'>Prep Instructions</h3>
@@ -693,6 +515,7 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                     onChange={(e) => updateInstruction(index, e.target.value)}
                     placeholder={`Enter step ${index + 1} instructions`}
                     required
+                    disabled={isSubmitting}
                   />
                 </div>
                 <Button
@@ -701,7 +524,7 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                   size='icon'
                   className='mt-2'
                   onClick={() => removeInstruction(index)}
-                  disabled={instructions.length === 1}
+                  disabled={instructions.length === 1 || isSubmitting}
                   aria-label='Remove instruction'
                 >
                   <Trash2 className='h-4 w-4' />
@@ -714,6 +537,7 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
               size='sm'
               className='mt-2'
               onClick={addInstruction}
+              disabled={isSubmitting}
             >
               <Plus className='h-4 w-4 mr-2' />
               Add Step
@@ -727,10 +551,20 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
           type='button'
           variant='outline'
           onClick={() => router.push("/admin")}
+          disabled={isSubmitting}
         >
           Cancel
         </Button>
-        <Button type='submit'>Save Recipe</Button>
+        <Button type='submit' disabled={!isFormValid || isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+              Saving...
+            </>
+          ) : (
+            "Save Recipe"
+          )}
+        </Button>
       </div>
     </form>
   );
