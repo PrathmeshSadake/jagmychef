@@ -1,4 +1,3 @@
-// components/SearchBar.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useDebounce } from "@/hooks/use-debounce";
 import { SearchIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { toast, Toaster } from "sonner";
 import { useAtom } from "jotai";
 import { recipesDataAtom, selectedRecipeIdsAtom } from "@/lib/atoms";
+import Link from "next/link";
 
 type SearchResult = {
   id: string;
@@ -31,6 +31,18 @@ export default function SearchBar() {
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Close results when route changes or an item is clicked
+  const closeResults = () => {
+    setResults([]);
+    setSearchTerm("");
+  };
+
+  useEffect(() => {
+    // Close results when pathname changes
+    closeResults();
+  }, [pathname]);
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -78,6 +90,9 @@ export default function SearchBar() {
 
       toast.success("Ingredients added to your menu");
       setIsAdded(true);
+
+      // Close results after adding to menu
+      closeResults();
     } catch (error) {
       console.error("Error adding to menu:", error);
       toast.error("An unexpected error occurred. Please try again.");
@@ -89,12 +104,14 @@ export default function SearchBar() {
   const handleActionClick = (item: SearchResult) => {
     console.log("Action clicked for:", item.name, "ID:", item.id);
 
-    if (item.type == "category") {
+    if (item.type === "category") {
       router.push(`/categories/${item.name}`);
     } else {
-      // router.push(`/recipes/${item.id}`);
       handleAddToShoppingList(item);
     }
+
+    // Close results after action
+    closeResults();
   };
 
   return (
@@ -124,7 +141,18 @@ export default function SearchBar() {
                   className='flex items-center justify-between p-3'
                 >
                   <div>
-                    <span className='font-medium'>{item.name}</span>
+                    <span className='font-medium'>
+                      <Link
+                        href={
+                          item.type === "category"
+                            ? `/categories/${item.name}`
+                            : `/recipes/${item.id}`
+                        }
+                        onClick={closeResults}
+                      >
+                        {item.name}
+                      </Link>
+                    </span>
                     <span className='ml-2 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full'>
                       {item.type}
                     </span>
@@ -134,7 +162,7 @@ export default function SearchBar() {
                     size='sm'
                     onClick={() => handleActionClick(item)}
                   >
-                    {item.type == "category" ? "View" : "Add to Menu"}
+                    {item.type === "category" ? "View" : "Add to Menu"}
                   </Button>
                 </li>
               ))}
