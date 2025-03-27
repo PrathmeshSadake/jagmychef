@@ -6,6 +6,7 @@ import {
   ClockIcon,
   Eye,
   ListIcon,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +19,38 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
+import { revalidatePath } from "next/cache";
+
+// Server action for deleting a list
+async function deleteList(formData: FormData) {
+  "use server";
+  const listId = formData.get("listId") as string;
+
+  try {
+    // Delete the list and its associated recipes
+    await prisma.list.delete({
+      where: { id: listId },
+    });
+
+    // Revalidate the current path to refresh the data
+    revalidatePath("/admin/lists");
+  } catch (error) {
+    console.error("Error deleting list:", error);
+    // You might want to add error handling here
+  }
+}
 
 export default async function ListsAdminPage() {
   const lists = await prisma.list.findMany({
@@ -93,7 +125,7 @@ export default async function ListsAdminPage() {
                         <span>{list.recipes.length}</span>
                       </Badge>
                     </TableCell>
-                    <TableCell className='text-right'>
+                    <TableCell className='text-right flex justify-end items-center space-x-2'>
                       <Button variant='ghost' size='sm' asChild>
                         <Link
                           href={`/admin/lists/${list.id}`}
@@ -103,6 +135,47 @@ export default async function ListsAdminPage() {
                           View
                         </Link>
                       </Button>
+
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant='destructive'
+                            size='sm'
+                            className='flex items-center gap-1'
+                          >
+                            <Trash2 className='h-4 w-4' />
+                            Delete
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Are you absolutely sure?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will
+                              permanently delete this list and remove all
+                              associated recipes.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <form action={deleteList}>
+                              <input
+                                type='hidden'
+                                name='listId'
+                                value={list.id}
+                              />
+                              <AlertDialogAction
+                                type='submit'
+                                className='w-full'
+                              >
+                                Continue
+                              </AlertDialogAction>
+                            </form>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </TableCell>
                   </TableRow>
                 ))}
