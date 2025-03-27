@@ -15,6 +15,12 @@ interface ShoppingItem {
   quantity: number;
   unit: string;
 }
+interface RecipeDetails {
+  id: string;
+  name: string;
+  instructions: string[];
+  chefInstructions?: string[];
+}
 
 interface ShoppingListByCategory {
   [category: string]: ShoppingItem[];
@@ -23,11 +29,13 @@ interface ShoppingListByCategory {
 interface ShoppingListActionsProps {
   shoppingList: ShoppingListByCategory;
   selectedRecipeIds?: string[]; // Add this prop for the recipe IDs
+  selectedRecipes?: RecipeDetails[]; // Add this prop for recipe details
 }
 
 export function ShoppingListActions({
   shoppingList,
   selectedRecipeIds = [],
+  selectedRecipes = [],
 }: ShoppingListActionsProps) {
   const [userDetails, setUserDetails] = useAtom(userDetailsAtom);
   const [_, setSelectedRecipeIds] = useAtom(selectedRecipeIdsAtom);
@@ -131,18 +139,29 @@ export function ShoppingListActions({
         currentY += 10;
       }
 
+      // Ingredients section
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(66, 135, 245);
+      doc.text("Ingredients", marginLeft, currentY);
+      currentY += 8;
+
+      // Reset text color for items
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+
       // Process organized list from OpenAI
       if (organizedList && organizedList.categories) {
-        // For each category
         organizedList.categories.forEach((category: any) => {
           // Check if we need a new page
-          if (currentY > 270) {
+          if (currentY > 250) {
             doc.addPage();
             currentY = 20;
           }
 
           // Add category header
-          doc.setFontSize(16);
+          doc.setFontSize(14);
           doc.setFont("helvetica", "bold");
           doc.setTextColor(66, 135, 245);
           doc.text(category.name, marginLeft, currentY);
@@ -156,70 +175,98 @@ export function ShoppingListActions({
           // Add each item under this category
           category.items.forEach((item: any) => {
             // Check if we need a new page
-            if (currentY > 270) {
+            if (currentY > 250) {
               doc.addPage();
               currentY = 20;
             }
 
-            // Format item text
             const itemText = `• ${item.name}: ${item.quantity} ${
               item.unit || ""
             }`;
             doc.text(itemText, marginLeft, currentY);
             currentY += 6;
-
-            // Add calories on a separate line if available
-            // if (item.calories) {
-            //   doc.setFont("helvetica", "italic");
-            //   doc.text(
-            //     `  (${item.calories} calories per serving)`,
-            //     marginLeft,
-            //     currentY
-            //   );
-            //   doc.setFont("helvetica", "normal");
-            //   currentY += 6;
-            // }
           });
 
           // Add extra space after each category
           currentY += 6;
         });
-      } else {
-        // Fallback to original format if AI organization fails
-        Object.entries(shoppingList).forEach(([category, items]) => {
+      }
+
+      // Recipe Instructions section
+      if (selectedRecipes.length > 0) {
+        // Add a page break if needed
+        if (currentY > 200) {
+          doc.addPage();
+          currentY = 20;
+        }
+
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(66, 135, 245);
+        doc.text("Customer Prep Instructions", marginLeft, currentY);
+        currentY += 10;
+
+        // Reset text color for instructions
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "normal");
+
+        selectedRecipes.forEach((recipe) => {
           // Check if we need a new page
-          if (currentY > 270) {
+          if (currentY > 250) {
             doc.addPage();
             currentY = 20;
           }
 
-          // Add category header
-          doc.setFontSize(16);
+          // Recipe name
           doc.setFont("helvetica", "bold");
-          doc.setTextColor(66, 135, 245);
-          doc.text(category, marginLeft, currentY);
+          doc.text(recipe.name, marginLeft, currentY);
           currentY += 8;
 
-          // Reset text color for items
-          doc.setTextColor(0, 0, 0);
-          doc.setFontSize(12);
+          // Reset to normal font for instructions
           doc.setFont("helvetica", "normal");
 
-          // Add each item under this category
-          items.forEach((item) => {
-            // Check if we need a new page
-            if (currentY > 270) {
-              doc.addPage();
-              currentY = 20;
-            }
+          // Standard instructions
+          if (recipe.instructions && recipe.instructions.length > 0) {
+            recipe.instructions.forEach((instruction, index) => {
+              // Check if we need a new page
+              if (currentY > 250) {
+                doc.addPage();
+                currentY = 20;
+              }
 
-            const itemText = `• ${item.name}: ${item.quantity} ${item.unit}`;
-            doc.text(itemText, marginLeft, currentY);
+              const instructionText = `${index + 1}. ${instruction}`;
+
+              // Wrap long instructions
+              const splitText = doc.splitTextToSize(instructionText, 170);
+              doc.text(splitText, marginLeft, currentY);
+              currentY += 6 * splitText.length;
+            });
+          }
+
+          // Chef's special instructions (if available)
+          if (recipe.chefInstructions && recipe.chefInstructions.length > 0) {
             currentY += 6;
-          });
+            doc.setFont("helvetica", "bold");
+            doc.text("Chef's Notes:", marginLeft, currentY);
+            currentY += 8;
 
-          // Add extra space after each category
-          currentY += 6;
+            doc.setFont("helvetica", "normal");
+            recipe.chefInstructions.forEach((instruction) => {
+              // Check if we need a new page
+              if (currentY > 250) {
+                doc.addPage();
+                currentY = 20;
+              }
+
+              const splitText = doc.splitTextToSize(instruction, 170);
+              doc.text(splitText, marginLeft, currentY);
+              currentY += 6 * splitText.length;
+            });
+          }
+
+          // Add extra space between recipes
+          currentY += 10;
         });
       }
 
@@ -234,6 +281,7 @@ export function ShoppingListActions({
 
   const handleSaveToDatabase = async () => {
     try {
+      setIsLoading(true);
       if (!userDetails) {
         toast.error("User details are required");
         return;
@@ -268,6 +316,8 @@ export function ShoppingListActions({
     } catch (error) {
       console.error("Error saving shopping list:", error);
       toast.error("Failed to save shopping list");
+    } finally {
+      setIsLoading(false);
     }
   };
 

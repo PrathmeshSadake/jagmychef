@@ -141,7 +141,7 @@ export function ShoppingListClient() {
               )}
               {selectedRecipes.length > 0 && selectedRecipes.length < 4 && (
                 <div className='mt-4 p-3 bg-muted rounded-md'>
-                  <p className='text-sm text-white'>
+                  <p className='text-sm text-gray-500'>
                     You can select up to 4 recipes. Currently selected:{" "}
                     {selectedRecipes.length}
                   </p>
@@ -215,6 +215,7 @@ export function ShoppingListClient() {
         <ShoppingListActions
           shoppingList={shoppingList}
           selectedRecipeIds={selectedRecipeIds}
+          selectedRecipes={selectedRecipes}  // Add this line
         />
       </div>
     </>
