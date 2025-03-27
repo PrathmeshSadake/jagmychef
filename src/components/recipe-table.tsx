@@ -47,9 +47,12 @@ export function RecipeTable({ recipes }: RecipeTableProps) {
     if (!recipeToDelete) return;
 
     try {
-      const response = await fetch(`/api/recipes/${recipeToDelete}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/recipes/${recipeToDelete}?id=${recipeToDelete}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (response.ok) {
         // Refresh the page to show updated data
@@ -110,19 +113,19 @@ export function RecipeTable({ recipes }: RecipeTableProps) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align='end'>
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        {/* <Link href={`/admin/recipes/${recipe.id}`}>
+                        <Link href={`/admin/recipes/${recipe.id}`}>
                           <DropdownMenuItem>
                             <Edit className='mr-2 h-4 w-4' />
                             Edit
                           </DropdownMenuItem>
-                        </Link> */}
-                        {/* <DropdownMenuItem
+                        </Link>
+                        <DropdownMenuItem
                           onClick={() => confirmDelete(recipe.id)}
                           className='text-red-600'
                         >
                           <Trash2 className='mr-2 h-4 w-4' />
                           Delete
-                        </DropdownMenuItem> */}
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

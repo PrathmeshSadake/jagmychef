@@ -69,6 +69,8 @@ export async function createRecipe(formData: FormData) {
     ) as string[];
     const ingredientUnits = formData.getAll("ingredientUnit") as string[];
     const instructions = formData.getAll("instruction") as string[];
+    const chefInstructions = formData.getAll("chefInstructions") as string[];
+
     const categoryIds = formData.getAll("categoryIds") as string[];
 
     // Validate required fields
@@ -88,6 +90,7 @@ export async function createRecipe(formData: FormData) {
         prepTime,
         image: imageUrl,
         instructions,
+        chefInstructions,
         ingredients: {
           create: ingredientNames.map((name, index) => ({
             name,

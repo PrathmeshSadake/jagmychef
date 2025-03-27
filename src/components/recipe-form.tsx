@@ -53,6 +53,7 @@ interface Recipe {
   description?: string;
   image?: string;
   ingredients: Ingredient[];
+  chefInstructions: string[];
   instructions: string[];
   categories?: Category[];
 }
@@ -87,6 +88,10 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
   // Units state
   const [units, setUnits] = useState<Unit[]>([]);
   const [unitsLoading, setUnitsLoading] = useState<boolean>(true);
+
+  const [chefInstructions, setChefInstructions] = useState<string[]>(
+    recipe?.chefInstructions || [""]
+  );
 
   // Fetch categories from API
   useEffect(() => {
@@ -193,6 +198,21 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
     }
   };
 
+  // New methods for chef instructions
+  const addChefInstruction = () => {
+    setChefInstructions([...chefInstructions, ""]);
+  };
+
+  const removeChefInstruction = (index: number) => {
+    setChefInstructions(chefInstructions.filter((_, i) => i !== index));
+  };
+
+  const updateChefInstruction = (index: number, value: string) => {
+    const newChefInstructions = [...chefInstructions];
+    newChefInstructions[index] = value;
+    setChefInstructions(newChefInstructions);
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -210,6 +230,10 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
     // Add instructions to formData
     instructions.forEach((instruction) => {
       formData.append("instruction", instruction);
+    });
+    // Add chef instructions to formData
+    chefInstructions.forEach((chefInstruction) => {
+      formData.append("chefInstruction", chefInstruction);
     });
 
     // Add categories to formData
@@ -250,7 +274,8 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
   // Determine if the form can be submitted
   const isFormValid =
     ingredients.every((ing) => ing.name && ing.quantity && ing.unit) &&
-    instructions.every((inst) => inst.trim() !== "");
+    instructions.every((inst) => inst.trim() !== "") &&
+    chefInstructions.every((inst) => inst.trim() !== "");
 
   return (
     <form onSubmit={handleSubmit} className='space-y-8'>
@@ -541,6 +566,63 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
             >
               <Plus className='h-4 w-4 mr-2' />
               Add Step
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className='pt-6'>
+          <h3 className='text-lg font-medium mb-4'>Chef Instructions</h3>
+          <div className='space-y-4'>
+            {chefInstructions.map((instruction, index) => (
+              <div key={index} className='flex gap-3 items-start'>
+                <div className='flex-none pt-3 text-muted-foreground font-medium'>
+                  {index + 1}.
+                </div>
+                <div className='grid gap-2 flex-1'>
+                  <Label
+                    htmlFor={`chef-instruction-${index}`}
+                    className='sr-only'
+                  >
+                    Chef Step {index + 1}
+                  </Label>
+                  <Textarea
+                    id={`chef-instruction-${index}`}
+                    value={instruction}
+                    onChange={(e) =>
+                      updateChefInstruction(index, e.target.value)
+                    }
+                    placeholder={`Enter chef's special tip or technique for step ${
+                      index + 1
+                    }`}
+                    required
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <Button
+                  type='button'
+                  variant='ghost'
+                  size='icon'
+                  className='mt-2'
+                  onClick={() => removeChefInstruction(index)}
+                  disabled={chefInstructions.length === 1 || isSubmitting}
+                  aria-label='Remove chef instruction'
+                >
+                  <Trash2 className='h-4 w-4' />
+                </Button>
+              </div>
+            ))}
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              className='mt-2'
+              onClick={addChefInstruction}
+              disabled={isSubmitting}
+            >
+              <Plus className='h-4 w-4 mr-2' />
+              Add Chef Tip
             </Button>
           </div>
         </CardContent>

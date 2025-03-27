@@ -125,8 +125,8 @@ export function RecipeCard({
           <CardTitle className='text-lg line-clamp-1'>{recipe.name}</CardTitle>
         </div>
       </CardHeader>
-      <CardContent className='p-4 pt-2 flex-grow'>
-        <p className='text-sm text-white line-clamp-2'>
+      <CardContent className='flex-grow'>
+        <p className='text-sm text-black line-clamp-2'>
           {recipe.description ||
             "A delicious recipe with carefully selected ingredients."}
         </p>

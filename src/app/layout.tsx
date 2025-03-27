@@ -21,7 +21,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang='en'>
-        <body className={`${fraunces.className}`}>
+        <body className={`${fraunces.className} px-2 lg:px-0`}>
           {children}
 
           <Toaster />

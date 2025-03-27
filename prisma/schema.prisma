@@ -17,6 +17,7 @@ model Recipe {
   prepTime     String?
   image        String?
   instructions String[]
+  chefInstructions String[]
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
   ingredients  Ingredient[]
