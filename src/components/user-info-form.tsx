@@ -177,6 +177,7 @@ export function UserDetailsDialog() {
                     selected={date}
                     onSelect={handleDateSelect}
                     initialFocus
+                    fromDate={new Date()}
                     className='w-full'
                   />
                   <div className='mt-2 flex justify-end'>

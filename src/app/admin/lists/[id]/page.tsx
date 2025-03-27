@@ -170,7 +170,7 @@ export default async function ListDetailPage({ params }: { params: any }) {
                         <Separator />
                         <div>
                           <h4 className='text-sm font-semibold mb-2'>
-                            Instructions
+                            Customer Prep Instructions
                           </h4>
                           <ol className='list-decimal pl-5 space-y-2'>
                             {recipe.instructions.map((instruction, idx) => (
@@ -182,6 +182,27 @@ export default async function ListDetailPage({ params }: { params: any }) {
                         </div>
                       </>
                     )}
+
+                    {recipe.chefInstructions &&
+                      recipe.chefInstructions.length > 0 && (
+                        <>
+                          <Separator />
+                          <div>
+                            <h4 className='text-sm font-semibold mb-2'>
+                              Chef Instructions
+                            </h4>
+                            <ol className='list-decimal pl-5 space-y-2'>
+                              {recipe.chefInstructions.map(
+                                (instruction, idx) => (
+                                  <li key={idx} className='text-sm'>
+                                    {instruction}
+                                  </li>
+                                )
+                              )}
+                            </ol>
+                          </div>
+                        </>
+                      )}
                   </CardContent>
                 </Card>
               ))}

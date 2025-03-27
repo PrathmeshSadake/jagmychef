@@ -69,7 +69,9 @@ export default async function RecipeDetailPage({ params }: { params: any }) {
           </div>
 
           <div>
-            <h2 className='text-xl font-semibold mb-3'>Instructions</h2>
+            <h2 className='text-xl font-semibold mb-3'>
+              Customer Prep Instructions
+            </h2>
             <ol className='space-y-4 ml-5 list-decimal'>
               {recipe.instructions?.map((step: any, index: any) => (
                 <li key={index} className='text-muted-foreground'>
