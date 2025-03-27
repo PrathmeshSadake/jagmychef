@@ -250,10 +250,13 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
 
     try {
       // Submit the form data to the server
-      const response = await fetch("/api/recipes", {
-        method: recipe ? "PUT" : "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        recipe ? `/api/recipes?id=${recipe.id}` : "/api/recipes",
+        {
+          method: recipe ? "PUT" : "POST",
+          body: formData,
+        }
+      );
 
       if (!response.ok) {
         const errorText = await response.text();

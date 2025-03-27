@@ -69,9 +69,11 @@ export async function createRecipe(formData: FormData) {
     ) as string[];
     const ingredientUnits = formData.getAll("ingredientUnit") as string[];
     const instructions = formData.getAll("instruction") as string[];
-    const chefInstructions = formData.getAll("chefInstructions") as string[];
+    const chefInstructions = formData.getAll("chefInstruction") as string[]; // Use singular "chefInstruction"
 
     const categoryIds = formData.getAll("categoryIds") as string[];
+
+    console.log("chefInstructions", chefInstructions);
 
     // Validate required fields
     if (!name) {
@@ -113,9 +115,8 @@ export async function createRecipe(formData: FormData) {
 
 // Function to update an existing recipe
 
-export async function updateRecipe(formData: FormData) {
+export async function updateRecipe(id: string, formData: FormData) {
   try {
-    const id = formData.get("id") as string;
     const name = formData.get("name") as string;
     const description = formData.get("description") as string;
     const prepTime = formData.get("prepTime") as string;
@@ -128,6 +129,8 @@ export async function updateRecipe(formData: FormData) {
     ) as string[];
     const ingredientUnits = formData.getAll("ingredientUnit") as string[];
     const instructions = formData.getAll("instruction") as string[];
+    const chefInstructions = formData.getAll("chefInstruction") as string[]; // Use singular "chefInstruction"
+
     const categoryIds = formData.getAll("categoryIds") as string[];
 
     // Validate required fields
@@ -155,6 +158,7 @@ export async function updateRecipe(formData: FormData) {
         prepTime,
         image: imageUrl,
         instructions,
+        chefInstructions,
         ingredients: {
           create: ingredientNames.map((name, index) => ({
             name,

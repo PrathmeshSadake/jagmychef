@@ -120,7 +120,7 @@ export function RecipeCard({
           />
         </div>
       </div>
-      <CardHeader className='p-4 pb-0'>
+      <CardHeader className=''>
         <div className='flex justify-between items-start'>
           <CardTitle className='text-lg line-clamp-1'>{recipe.name}</CardTitle>
         </div>
@@ -131,7 +131,7 @@ export function RecipeCard({
             "A delicious recipe with carefully selected ingredients."}
         </p>
       </CardContent>
-      <CardFooter className='p-4 pt-0 flex justify-between'>
+      <CardFooter className='px-4 pt-0 flex justify-between'>
         <Link href={`/recipes/${recipe.id}`}>
           <Button variant='outline' size='sm'>
             View Details

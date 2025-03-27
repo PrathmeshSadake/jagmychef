@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Edit, Trash2, MoreHorizontal } from "lucide-react";
+import { Edit, Trash2, MoreHorizontal, EyeIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Recipe } from "@prisma/client";
 
@@ -113,7 +113,13 @@ export function RecipeTable({ recipes }: RecipeTableProps) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align='end'>
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <Link href={`/admin/recipes/${recipe.id}`}>
+                        <Link href={`/admin/recipes/${recipe.id}/view`}>
+                          <DropdownMenuItem>
+                            <EyeIcon className='mr-2 h-4 w-4' />
+                            View
+                          </DropdownMenuItem>
+                        </Link>
+                        <Link href={`/admin/recipes/${recipe.id}/edit`}>
                           <DropdownMenuItem>
                             <Edit className='mr-2 h-4 w-4' />
                             Edit
