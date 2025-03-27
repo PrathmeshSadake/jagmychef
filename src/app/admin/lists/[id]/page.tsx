@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
+import { ListDownloadButton } from "@/components/list-download-btn";
 
 export default async function ListDetailPage({ params }: { params: any }) {
   const list = await prisma.list.findUnique({
@@ -54,8 +55,10 @@ export default async function ListDetailPage({ params }: { params: any }) {
             Back to Lists
           </Link>
         </Button>
-      </div>
 
+        {/* Add the download button here */}
+        <ListDownloadButton list={list as any} />
+      </div>
       <Card className='mb-8'>
         <CardHeader>
           <CardTitle className='text-3xl'>{list.name}</CardTitle>
