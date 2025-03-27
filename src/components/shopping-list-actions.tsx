@@ -219,9 +219,9 @@ export function ShoppingListActions({
           }
 
           // Recipe name
-          doc.setFont("helvetica", "bold");
-          doc.text(recipe.name, marginLeft, currentY);
-          currentY += 8;
+          // doc.setFont("helvetica", "bold");
+          // doc.text(recipe.name, marginLeft, currentY);
+          // currentY += 8;
 
           // Reset to normal font for instructions
           doc.setFont("helvetica", "normal");
@@ -245,25 +245,25 @@ export function ShoppingListActions({
           }
 
           // Chef's special instructions (if available)
-          if (recipe.chefInstructions && recipe.chefInstructions.length > 0) {
-            currentY += 6;
-            doc.setFont("helvetica", "bold");
-            doc.text("Chef's Notes:", marginLeft, currentY);
-            currentY += 8;
+          // if (recipe.chefInstructions && recipe.chefInstructions.length > 0) {
+          //   currentY += 6;
+          //   doc.setFont("helvetica", "bold");
+          //   doc.text("Chef's Notes:", marginLeft, currentY);
+          //   currentY += 8;
 
-            doc.setFont("helvetica", "normal");
-            recipe.chefInstructions.forEach((instruction) => {
-              // Check if we need a new page
-              if (currentY > 250) {
-                doc.addPage();
-                currentY = 20;
-              }
+          //   doc.setFont("helvetica", "normal");
+          //   recipe.chefInstructions.forEach((instruction) => {
+          //     // Check if we need a new page
+          //     if (currentY > 250) {
+          //       doc.addPage();
+          //       currentY = 20;
+          //     }
 
-              const splitText = doc.splitTextToSize(instruction, 170);
-              doc.text(splitText, marginLeft, currentY);
-              currentY += 6 * splitText.length;
-            });
-          }
+          //     const splitText = doc.splitTextToSize(instruction, 170);
+          //     doc.text(splitText, marginLeft, currentY);
+          //     currentY += 6 * splitText.length;
+          //   });
+          // }
 
           // Add extra space between recipes
           currentY += 10;

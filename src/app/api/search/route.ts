@@ -17,7 +17,7 @@ export async function GET(request: Request) {
       where: {
         OR: [
           { name: { contains: searchTerm, mode: "insensitive" } },
-          { description: { contains: searchTerm, mode: "insensitive" } },
+          // { description: { contains: searchTerm, mode: "insensitive" } },
         ],
       },
       select: {
@@ -28,16 +28,16 @@ export async function GET(request: Request) {
     });
 
     // Search for categories
-    const categories = await prisma.category.findMany({
-      where: {
-        name: { contains: searchTerm, mode: "insensitive" },
-      },
-      select: {
-        id: true,
-        name: true,
-        // type: "category",
-      },
-    });
+    // const categories = await prisma.category.findMany({
+    //   where: {
+    //     name: { contains: searchTerm, mode: "insensitive" },
+    //   },
+    //   select: {
+    //     id: true,
+    //     name: true,
+    //     // type: "category",
+    //   },
+    // });
 
     // Search for ingredients
     // const ingredients = await prisma.ingredient.findMany({
@@ -59,11 +59,11 @@ export async function GET(request: Request) {
       type: "recipe",
     }));
 
-    const categoryResults = categories.map((category) => ({
-      id: category.id,
-      name: category.name,
-      type: "category",
-    }));
+    // const categoryResults = categories.map((category) => ({
+    //   id: category.id,
+    //   name: category.name,
+    //   type: "category",
+    // }));
 
     // const ingredientResults = ingredients.map((ingredient) => ({
     //   id: ingredient.id,
@@ -74,7 +74,7 @@ export async function GET(request: Request) {
 
     const results = [
       ...recipeResults,
-      ...categoryResults,
+      // ...categoryResults,
       // ...ingredientResults,
     ];
 

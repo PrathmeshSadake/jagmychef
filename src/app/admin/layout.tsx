@@ -6,7 +6,7 @@ const AdminLayout = async ({ children }: { children: React.ReactNode }) => {
   if (!user) {
     redirect("/sign-in");
   }
-  return <div>{children}</div>;
+  return <div className='max-w-7xl mx-auto'>{children}</div>;
 };
 
 export default AdminLayout;
