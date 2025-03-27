@@ -203,7 +203,7 @@ export function ShoppingListActions({
         doc.setFontSize(16);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(66, 135, 245);
-        doc.text("Customer Prep Instructions", marginLeft, currentY);
+        doc.text("Client Prep Instructions", marginLeft, currentY);
         currentY += 10;
 
         // Reset text color for instructions
