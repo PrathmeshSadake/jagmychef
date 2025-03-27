@@ -129,6 +129,7 @@ export function UserDetailsDialog() {
             <div className='col-span-3'>
               <PhoneInput
                 international
+                countries={["US"]}
                 defaultCountry='US'
                 value={phoneNumber}
                 onChange={(value) => setPhoneNumber(value || "")}
