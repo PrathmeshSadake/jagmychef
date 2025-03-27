@@ -128,8 +128,8 @@ export function UserDetailsDialog() {
             </Label>
             <div className='col-span-3'>
               <PhoneInput
-                international
                 countries={["US"]}
+                addInternationalOption={false}
                 defaultCountry='US'
                 value={phoneNumber}
                 onChange={(value) => setPhoneNumber(value || "")}
