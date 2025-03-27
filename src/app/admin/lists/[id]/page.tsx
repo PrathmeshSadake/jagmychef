@@ -39,6 +39,8 @@ export default async function ListDetailPage({ params }: { params: any }) {
     notFound();
   }
 
+  console.log(list);
+
   return (
     <div className='container mx-auto py-8 px-4 max-w-6xl'>
       <div className='flex justify-between mb-6'>
