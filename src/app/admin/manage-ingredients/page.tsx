@@ -229,7 +229,7 @@ export default function IngredientManagement() {
       ) : (
         <IngredientTable
           ingredients={ingredients}
-          onEdit={openEditDialog as any}
+          // onEdit={openEditDialog as any}
         />
       )}
 

@@ -106,7 +106,7 @@ export function IngredientTable({ ingredients }: IngredientTableProps) {
                   <TableCell>{ingredient.quantity}</TableCell>
                   <TableCell>{ingredient.unit}</TableCell>
                   <TableCell>
-                    <Button onClick={() => onEdit(ingredient)}>
+                    <Button onClick={() => {}}>
                       <Edit className='mr-2 h-4 w-4' />
                       Edit
                     </Button>
