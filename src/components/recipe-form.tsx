@@ -4,7 +4,7 @@ import type React from "react";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, Upload, X, Loader2 } from "lucide-react";
+import { Plus, Trash2, Upload, X, Loader2, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,12 +28,25 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 // Define proper types
 interface Ingredient {
   name: string;
   quantity: string;
   unit: string;
+}
+
+interface SavedIngredient {
+  id: string;
+  name: string;
+  quantity: string;
+  unit: string;
+  isCreated: boolean;
 }
 
 interface Category {
@@ -89,6 +102,16 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
   const [units, setUnits] = useState<Unit[]>([]);
   const [unitsLoading, setUnitsLoading] = useState<boolean>(true);
 
+  // Saved ingredients state
+  const [savedIngredients, setSavedIngredients] = useState<SavedIngredient[]>(
+    []
+  );
+  const [filteredIngredients, setFilteredIngredients] = useState<
+    SavedIngredient[]
+  >([]);
+  const [ingredientSearch, setIngredientSearch] = useState<string>("");
+  const [ingredientsLoading, setIngredientsLoading] = useState<boolean>(true);
+
   const [chefInstructions, setChefInstructions] = useState<string[]>(
     recipe?.chefInstructions || [""]
   );
@@ -133,6 +156,40 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
     fetchUnits();
   }, []);
 
+  // Fetch saved ingredients from API
+  useEffect(() => {
+    const fetchIngredients = async () => {
+      try {
+        const response = await fetch("/api/ingredients/admin?isCreated=true");
+        if (!response.ok) {
+          throw new Error("Failed to fetch ingredients");
+        }
+        const data = await response.json();
+        setSavedIngredients(data);
+        setFilteredIngredients(data);
+        setIngredientsLoading(false);
+      } catch (error) {
+        console.error("Error fetching ingredients:", error);
+        setIngredientsLoading(false);
+      }
+    };
+
+    fetchIngredients();
+  }, []);
+
+  // Filter ingredients based on search
+  useEffect(() => {
+    if (ingredientSearch.trim() === "") {
+      setFilteredIngredients(savedIngredients);
+    } else {
+      setFilteredIngredients(
+        savedIngredients.filter((ingredient) =>
+          ingredient.name.toLowerCase().includes(ingredientSearch.toLowerCase())
+        )
+      );
+    }
+  }, [ingredientSearch, savedIngredients]);
+
   const addIngredient = () => {
     setIngredients([...ingredients, { name: "", quantity: "", unit: "" }]);
   };
@@ -148,6 +205,19 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
   ) => {
     const newIngredients = [...ingredients];
     newIngredients[index] = { ...newIngredients[index], [field]: value };
+    setIngredients(newIngredients);
+  };
+
+  const selectSavedIngredient = (
+    index: number,
+    savedIngredient: SavedIngredient
+  ) => {
+    const newIngredients = [...ingredients];
+    newIngredients[index] = {
+      name: savedIngredient.name,
+      quantity: savedIngredient.quantity,
+      unit: savedIngredient.unit,
+    };
     setIngredients(newIngredients);
   };
 
@@ -439,21 +509,85 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
           <h3 className='text-lg font-medium mb-4'>Ingredients</h3>
           <div className='space-y-4'>
             {ingredients.map((ingredient, index) => (
-              <div key={index} className='flex gap-3 items-start'>
+              <div key={index} className='flex gap-3 items-center'>
                 <div className='grid gap-2 flex-1'>
-                  <Label htmlFor={`ingredient-${index}`}>Ingredient Name</Label>
-                  <Input
-                    id={`ingredient-${index}`}
-                    value={ingredient.name}
-                    onChange={(e) =>
-                      updateIngredient(index, "name", e.target.value)
-                    }
-                    placeholder='e.g. Flour'
-                    required
-                    disabled={isSubmitting}
-                  />
+                  <div className='flex gap-2 items-center'>
+                    <Label htmlFor={`ingredient-${index}`}>
+                      Ingredient Name
+                    </Label>
+                  </div>
+                  <div className='flex items-center space-x-2'>
+                    <Input
+                      id={`ingredient-${index}`}
+                      value={ingredient.name}
+                      onChange={(e) =>
+                        updateIngredient(index, "name", e.target.value)
+                      }
+                      placeholder='e.g. Flour'
+                      required
+                      disabled={isSubmitting}
+                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='sm'
+                          className='ml-auto h-8 px-2'
+                          disabled={isSubmitting || ingredientsLoading}
+                        >
+                          Select Ingredient
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className='w-80 p-0' align='end'>
+                        <div className='p-2 border-b'>
+                          <div className='flex items-center gap-2'>
+                            <Search className='h-4 w-4 text-muted-foreground' />
+                            <Input
+                              placeholder='Search ingredients...'
+                              className='h-8 border-none focus-visible:ring-0'
+                              value={ingredientSearch}
+                              onChange={(e) =>
+                                setIngredientSearch(e.target.value)
+                              }
+                              disabled={isSubmitting}
+                            />
+                          </div>
+                        </div>
+                        <div className='max-h-60 overflow-y-auto'>
+                          {ingredientsLoading ? (
+                            <div className='p-4 text-center text-muted-foreground'>
+                              <Loader2 className='h-4 w-4 animate-spin mx-auto mb-2' />
+                              Loading ingredients...
+                            </div>
+                          ) : filteredIngredients.length === 0 ? (
+                            <div className='p-4 text-center text-muted-foreground'>
+                              No ingredients found
+                            </div>
+                          ) : (
+                            filteredIngredients.map((item) => (
+                              <button
+                                key={item.id}
+                                type='button'
+                                className='w-full text-left px-3 py-2 hover:bg-muted/50 flex justify-between items-center'
+                                onClick={() => {
+                                  selectSavedIngredient(index, item);
+                                }}
+                                disabled={isSubmitting}
+                              >
+                                <span className='font-medium'>{item.name}</span>
+                                <span className='text-sm text-muted-foreground'>
+                                  {item.quantity} {item.unit}
+                                </span>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </div>
-                <div className='grid gap-2 w-24'>
+                <div className='grid gap-2'>
                   <Label htmlFor={`quantity-${index}`}>Quantity</Label>
                   <Input
                     id={`quantity-${index}`}
@@ -466,7 +600,7 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                     disabled={isSubmitting}
                   />
                 </div>
-                <div className='grid gap-2 w-24'>
+                <div className='grid gap-2'>
                   <Label htmlFor={`unit-${index}`}>Unit</Label>
                   <Select
                     value={ingredient.unit}
@@ -499,9 +633,8 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                 </div>
                 <Button
                   type='button'
-                  variant='ghost'
                   size='icon'
-                  className='mt-8'
+                  className='mt-5'
                   onClick={() => removeIngredient(index)}
                   disabled={ingredients.length === 1 || isSubmitting}
                   aria-label='Remove ingredient'
@@ -524,6 +657,7 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
           </div>
         </CardContent>
       </Card>
+
       <Card>
         <CardContent className='pt-6'>
           <h3 className='text-lg font-medium mb-4'>Prep Instructions</h3>
