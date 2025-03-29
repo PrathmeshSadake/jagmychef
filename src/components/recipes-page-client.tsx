@@ -70,7 +70,7 @@ export default function RecipesPageClient({
           </Button> */}
           <Link href='/shopping-list'>
             <Button size='sm' className='gap-1'>
-              View Selected ({selectedRecipes.length})
+              Selected ({selectedRecipes.length}/4)
             </Button>
           </Link>
         </div>

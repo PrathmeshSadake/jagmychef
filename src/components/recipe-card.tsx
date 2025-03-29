@@ -97,7 +97,7 @@ export function RecipeCard({
   return (
     <Card className='overflow-hidden h-full flex flex-col'>
       <div className='relative'>
-        <div className='absolute top-2 right-2 z-10'>
+        {/* <div className='absolute top-2 right-2 z-10'>
           <Checkbox
             id={`recipe-${recipe.id}`}
             className='h-5 w-5 bg-white rounded-sm'
@@ -109,7 +109,7 @@ export function RecipeCard({
             }
             aria-label={selected ? "Remove from selection" : "Add to selection"}
           />
-        </div>
+        </div> */}
         <div className='relative h-36 w-full'>
           <Image
             src={recipe.image || "/placeholder.svg?height=200&width=400"}

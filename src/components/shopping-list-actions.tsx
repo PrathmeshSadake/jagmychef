@@ -14,7 +14,9 @@ interface ShoppingItem {
   name: string;
   quantity: number;
   unit: string;
+  checked?: boolean;
 }
+
 interface RecipeDetails {
   id: string;
   name: string;
@@ -28,20 +30,23 @@ interface ShoppingListByCategory {
 
 interface ShoppingListActionsProps {
   shoppingList: ShoppingListByCategory;
-  selectedRecipeIds?: string[]; // Add this prop for the recipe IDs
-  selectedRecipes?: RecipeDetails[]; // Add this prop for recipe details
+  selectedRecipeIds?: string[];
+  selectedRecipes?: RecipeDetails[];
+  checkedItems?: {
+    [category: string]: boolean[];
+  };
 }
 
 export function ShoppingListActions({
   shoppingList,
   selectedRecipeIds = [],
   selectedRecipes = [],
+  checkedItems = {},
 }: ShoppingListActionsProps) {
   const [userDetails, setUserDetails] = useAtom(userDetailsAtom);
   const [_, setSelectedRecipeIds] = useAtom(selectedRecipeIdsAtom);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [actionType, setActionType] = useState<"pdf" | "save">("pdf");
   const [isLoading, setIsLoading] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const router = useRouter();
 
   // Convert shopping list to a simple text format for the AI
@@ -88,6 +93,75 @@ export function ShoppingListActions({
     }
   };
 
+  // Get the checked status for an item
+  const isItemChecked = (category: string, index: number): boolean => {
+    return checkedItems[category]?.[index] || false;
+  };
+
+  // Create email content with shopping list details
+  const createEmailContent = () => {
+    // Get recipe names for the email
+    const recipeNames = selectedRecipes.map((recipe) => recipe.name);
+
+    // Format shopping list items for email
+    let shoppingListItems = "";
+    Object.entries(shoppingList).forEach(([category, items]) => {
+      shoppingListItems += `<h3>${category}</h3><ul>`;
+
+      items.forEach((item, index) => {
+        const isChecked = isItemChecked(category, index);
+        shoppingListItems += `<li${isChecked ? ' style="text-decoration: line-through;"' : ""}>`;
+        shoppingListItems += `${item.name}: ${item.quantity} ${item.unit}`;
+        shoppingListItems += `${isChecked ? " (already have)" : ""}`;
+        shoppingListItems += `</li>`;
+      });
+
+      shoppingListItems += `</ul>`;
+    });
+
+    return {
+      recipeNames,
+      shoppingListItems,
+    };
+  };
+
+  // Send email to customer with shopping list
+  const sendCustomerEmail = async () => {
+    try {
+      if (!userDetails?.email) {
+        console.error("Customer email is missing");
+        return false;
+      }
+
+      const { recipeNames, shoppingListItems } = createEmailContent();
+
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          to: userDetails.email,
+          name: userDetails.name,
+          recipeNames: recipeNames,
+          shoppingListItems: shoppingListItems,
+          subject: "Your Customized Grocery List is Ready!",
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to send email");
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error sending email:", error);
+      return false;
+    }
+  };
+
+  // Modified handlePdfDownload function with checkbox support
   const handlePdfDownload = async () => {
     try {
       // Get organized list from OpenAI
@@ -180,10 +254,44 @@ export function ShoppingListActions({
               currentY = 20;
             }
 
-            const itemText = `• ${item.name}: ${item.quantity} ${
-              item.unit || ""
-            }`;
-            doc.text(itemText, marginLeft, currentY);
+            // Draw checkbox
+            doc.rect(marginLeft, currentY - 4, 4, 4);
+
+            // Find if this item is checked in any category
+            let isChecked = false;
+            Object.entries(shoppingList).forEach(([listCategory, items]) => {
+              items.forEach((listItem, index) => {
+                if (
+                  listItem.name.toLowerCase() === item.name.toLowerCase() &&
+                  isItemChecked(listCategory, index)
+                ) {
+                  isChecked = true;
+                }
+              });
+            });
+
+            // If checked, draw an X in the checkbox
+            if (isChecked) {
+              doc.line(marginLeft, currentY - 4, marginLeft + 4, currentY);
+              doc.line(marginLeft, currentY, marginLeft + 4, currentY - 4);
+            }
+
+            // Format text differently based on checked status
+            const itemText = `${item.name}: ${item.quantity} ${item.unit || ""}`;
+
+            if (isChecked) {
+              // Draw line through text for checked items
+              const textWidth = doc.getTextWidth(itemText);
+              doc.line(
+                marginLeft + 6,
+                currentY - 2,
+                marginLeft + 6 + textWidth,
+                currentY - 2
+              );
+            }
+
+            // Add item text after checkbox
+            doc.text(itemText, marginLeft + 6, currentY);
             currentY += 6;
           });
 
@@ -210,7 +318,7 @@ export function ShoppingListActions({
         doc.setTextColor(0, 0, 0);
         doc.setFontSize(12);
         doc.setFont("helvetica", "normal");
-
+        let step = 1;
         selectedRecipes.forEach((recipe) => {
           // Check if we need a new page
           if (currentY > 250) {
@@ -218,55 +326,27 @@ export function ShoppingListActions({
             currentY = 20;
           }
 
-          // Recipe name
-          // doc.setFont("helvetica", "bold");
-          // doc.text(recipe.name, marginLeft, currentY);
-          // currentY += 8;
-
           // Reset to normal font for instructions
           doc.setFont("helvetica", "normal");
 
           // Standard instructions
           if (recipe.instructions && recipe.instructions.length > 0) {
-            recipe.instructions.forEach((instruction, index) => {
+            recipe.instructions.forEach((instruction) => {
               // Check if we need a new page
               if (currentY > 250) {
                 doc.addPage();
                 currentY = 20;
               }
 
-              const instructionText = `${index + 1}. ${instruction}`;
+              const instructionText = `${step}. ${instruction}`;
 
               // Wrap long instructions
               const splitText = doc.splitTextToSize(instructionText, 170);
               doc.text(splitText, marginLeft, currentY);
               currentY += 6 * splitText.length;
+              step = step + 1;
             });
           }
-
-          // Chef's special instructions (if available)
-          // if (recipe.chefInstructions && recipe.chefInstructions.length > 0) {
-          //   currentY += 6;
-          //   doc.setFont("helvetica", "bold");
-          //   doc.text("Chef's Notes:", marginLeft, currentY);
-          //   currentY += 8;
-
-          //   doc.setFont("helvetica", "normal");
-          //   recipe.chefInstructions.forEach((instruction) => {
-          //     // Check if we need a new page
-          //     if (currentY > 250) {
-          //       doc.addPage();
-          //       currentY = 20;
-          //     }
-
-          //     const splitText = doc.splitTextToSize(instruction, 170);
-          //     doc.text(splitText, marginLeft, currentY);
-          //     currentY += 6 * splitText.length;
-          //   });
-          // }
-
-          // Add extra space between recipes
-          currentY += 10;
         });
       }
 
@@ -307,12 +387,20 @@ export function ShoppingListActions({
         throw new Error(data.error || "Failed to save shopping list");
       }
 
+      // Generate PDF
       await handlePdfDownload();
 
-      toast.success("Shopping list saved successfully!");
-      setUserDetails(null);
-      setSelectedRecipeIds([]);
-      router.replace("/");
+      // Send email with shopping list
+      const emailSent = await sendCustomerEmail();
+
+      if (emailSent) {
+        // Show success dialog instead of toast
+        setShowSuccessDialog(true);
+      } else {
+        toast.warning("Shopping list saved but email could not be sent");
+      }
+
+      // Don't reset state here, we'll do it when the dialog is closed
     } catch (error) {
       console.error("Error saving shopping list:", error);
       toast.error("Failed to save shopping list");
@@ -321,35 +409,42 @@ export function ShoppingListActions({
     }
   };
 
+  // Add this function to handle dialog close/continue
+  const handleSuccessDialogClose = () => {
+    // Reset all states
+    setUserDetails(null);
+    setSelectedRecipeIds([]);
+    setShowSuccessDialog(false);
+    router.replace("/");
+  };
+  // At the very end of your component, before the final closing bracket
   return (
-    <div className='flex items-center gap-2'>
-      {/* <Button
-        variant='outline'
-        size='sm'
-        className='gap-1'
-        onClick={handleDownload}
-        disabled={isLoading}
-      >
-        <FileText className='h-4 w-4' />
-        {isLoading ? "Processing..." : "PDF"}
-      </Button>
-      <Button
-        variant='outline'
-        size='sm'
-        className='gap-1'
-        onClick={handleSaveClick}
-        disabled={isLoading}
-      >
-        <Save className='h-4 w-4' />
-        Save
-      </Button> */}
-      <Button className='w-full' onClick={handleSaveToDatabase}>
-        {isLoading ? (
-          <Loader className='h-4 w-5 animate-spin' />
-        ) : (
-          "Submit Menu and Download PDF"
-        )}
-      </Button>
-    </div>
+    <>
+      <div className='flex items-center gap-2'>
+        <Button className='w-full' onClick={handleSaveToDatabase}>
+          {isLoading ? (
+            <Loader className='h-4 w-5 animate-spin' />
+          ) : (
+            "Submit Menu and Download PDF"
+          )}
+        </Button>
+      </div>
+
+      {/* Success Dialog */}
+      {showSuccessDialog && (
+        <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50'>
+          <div className='bg-white p-6 rounded-lg max-w-md w-full'>
+            <h2 className='text-xl font-bold mb-4'>Thank You!</h2>
+            <p className='mb-6'>
+              Thank you for selecting your menu for the appointment! Your
+              grocery list has been sent to your email.
+            </p>
+            <div className='flex justify-end'>
+              <Button onClick={handleSuccessDialogClose}>Continue</Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

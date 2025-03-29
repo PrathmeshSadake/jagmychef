@@ -124,7 +124,7 @@ export default async function AdminPage() {
         </div>
       </div>
 
-      <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-4'>
+      <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
         <Card>
           <CardHeader className='pb-2'>
             <CardTitle className='text-sm font-medium'>Total Recipes</CardTitle>
@@ -156,29 +156,19 @@ export default async function AdminPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {listsCount}
+            <div className='text-2xl font-bold'>{listsCount}</div>
 
             <div>
-              <Link href={"/admin/lists"}>View</Link>
+              <Link
+                href={"/admin/lists"}
+                className='text-xs text-muted-foreground mt-1'
+              >
+                View
+              </Link>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              User Selections
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold'>
-              {totalSelections.toLocaleString()}
-            </div>
-            <p className='text-xs text-muted-foreground mt-1'>
-              {selectionPercentChange > 0 ? "+" : ""}
-              {selectionPercentChange}% from last month
-            </p>
-          </CardContent>
-        </Card>
+        
       </div>
 
       <div className='mt-8'>

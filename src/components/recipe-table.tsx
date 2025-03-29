@@ -1,9 +1,8 @@
-// components/recipe-table.tsx
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
-import { Edit, Trash2, MoreHorizontal, EyeIcon } from "lucide-react";
+import { Edit, Trash2, EyeIcon, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Recipe } from "@prisma/client";
 
@@ -15,13 +14,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -33,6 +25,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface RecipeTableProps {
   recipes: Recipe[];
@@ -42,10 +40,12 @@ export function RecipeTable({ recipes }: RecipeTableProps) {
   const router = useRouter();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [recipeToDelete, setRecipeToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
     if (!recipeToDelete) return;
 
+    setIsDeleting(true);
     try {
       const response = await fetch(
         `/api/recipes/${recipeToDelete}?id=${recipeToDelete}`,
@@ -63,34 +63,32 @@ export function RecipeTable({ recipes }: RecipeTableProps) {
     } catch (error) {
       console.error("Error deleting recipe:", error);
     } finally {
+      setIsDeleting(false);
       setIsDeleteDialogOpen(false);
       setRecipeToDelete(null);
     }
   };
 
   const confirmDelete = (id: string) => {
-    console.log(id);
     setRecipeToDelete(id);
     setIsDeleteDialogOpen(true);
   };
 
   return (
-    <>
+    <TooltipProvider>
       <div className='rounded-md border'>
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              {/* <TableHead>Cuisine</TableHead> */}
               <TableHead>Created</TableHead>
-              {/* <TableHead>Ingredients</TableHead> */}
-              <TableHead className='w-[100px]'>Actions</TableHead>
+              <TableHead className='w-[150px] text-center'>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {recipes.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className='text-center py-6'>
+                <TableCell colSpan={3} className='text-center py-6'>
                   No recipes found. Add your first recipe!
                 </TableCell>
               </TableRow>
@@ -98,42 +96,58 @@ export function RecipeTable({ recipes }: RecipeTableProps) {
               recipes.map((recipe) => (
                 <TableRow key={recipe.id}>
                   <TableCell className='font-medium'>{recipe.name}</TableCell>
-                  {/* <TableCell>{recipe.cuisine}</TableCell> */}
                   <TableCell>
                     {new Date(recipe.createdAt).toLocaleDateString()}
                   </TableCell>
-                  {/* <TableCell>{recipe.ingredients.length}</TableCell> */}
                   <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant='ghost' className='h-8 w-8 p-0'>
-                          <span className='sr-only'>Open menu</span>
-                          <MoreHorizontal className='h-4 w-4' />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align='end'>
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <Link href={`/admin/recipes/${recipe.id}/view`}>
-                          <DropdownMenuItem>
-                            <EyeIcon className='mr-2 h-4 w-4' />
-                            View
-                          </DropdownMenuItem>
-                        </Link>
-                        <Link href={`/admin/recipes/${recipe.id}/edit`}>
-                          <DropdownMenuItem>
-                            <Edit className='mr-2 h-4 w-4' />
-                            Edit
-                          </DropdownMenuItem>
-                        </Link>
-                        <DropdownMenuItem
-                          onClick={() => confirmDelete(recipe.id)}
-                          className='text-red-600'
-                        >
-                          <Trash2 className='mr-2 h-4 w-4' />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className='flex justify-center gap-2'>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Link href={`/admin/recipes/${recipe.id}/view`}>
+                            <Button
+                              variant='ghost'
+                              size='icon'
+                              className='h-8 w-8'
+                            >
+                              <EyeIcon className='h-4 w-4' />
+                              <span className='sr-only'>View recipe</span>
+                            </Button>
+                          </Link>
+                        </TooltipTrigger>
+                        <TooltipContent>View recipe</TooltipContent>
+                      </Tooltip>
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Link href={`/admin/recipes/${recipe.id}/edit`}>
+                            <Button
+                              variant='ghost'
+                              size='icon'
+                              className='h-8 w-8'
+                            >
+                              <Edit className='h-4 w-4' />
+                              <span className='sr-only'>Edit recipe</span>
+                            </Button>
+                          </Link>
+                        </TooltipTrigger>
+                        <TooltipContent>Edit recipe</TooltipContent>
+                      </Tooltip>
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            className='h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50'
+                            onClick={() => confirmDelete(recipe.id)}
+                          >
+                            <Trash2 className='h-4 w-4' />
+                            <span className='sr-only'>Delete recipe</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Delete recipe</TooltipContent>
+                      </Tooltip>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -144,7 +158,7 @@ export function RecipeTable({ recipes }: RecipeTableProps) {
 
       <AlertDialog
         open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
+        onOpenChange={(open) => !isDeleting && setIsDeleteDialogOpen(open)}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -155,13 +169,24 @@ export function RecipeTable({ recipes }: RecipeTableProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className='bg-red-600'>
-              Delete
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className='bg-red-600 hover:bg-red-700 focus:ring-red-600'
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </TooltipProvider>
   );
 }

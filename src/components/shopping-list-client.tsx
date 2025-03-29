@@ -215,7 +215,8 @@ export function ShoppingListClient() {
         <ShoppingListActions
           shoppingList={shoppingList}
           selectedRecipeIds={selectedRecipeIds}
-          selectedRecipes={selectedRecipes}  // Add this line
+          selectedRecipes={selectedRecipes}
+          checkedItems={checkedItems}
         />
       </div>
     </>
