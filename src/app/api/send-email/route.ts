@@ -22,39 +22,166 @@ export async function POST(request: Request) {
         ? recipeNames.map((name: string) => `<li>${name}</li>`).join("")
         : "<li>No recipes selected</li>";
 
-    // Email HTML template
+    // Email HTML template with improved design and logo
     const htmlContent = `
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Your Customized Grocery List</title>
           <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
-            h1 { color: #4281f5; }
-            h2 { color: #4281f5; margin-top: 20px; }
-            h3 { margin-top: 15px; color: #555; }
-            ul { padding-left: 20px; }
-            .footer { margin-top: 30px; padding-top: 15px; border-top: 1px solid #eee; font-size: 12px; color: #777; }
+            @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+            
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            
+            body {
+              font-family: 'Poppins', Arial, sans-serif;
+              line-height: 1.6;
+              color: #000000;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 0;
+              background-color: #f9f9f9;
+            }
+            
+            .container {
+              background-color: #ffffff;
+              border-radius: 12px;
+              overflow: hidden;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+              margin: 20px;
+            }
+            
+            .header {
+              background-color: #000;
+              padding: 30px;
+              text-align: center;
+            }
+            
+            .logo {
+              max-width: 180px;
+              height: auto;
+              margin-bottom: 10px;
+            }
+            
+            .content {
+              padding: 30px;
+            }
+            
+            h1 {
+              color: #000000;
+              font-size: 24px;
+              font-weight: 600;
+              margin-bottom: 20px;
+            }
+            
+            h2 {
+              color: #000000;
+              font-size: 20px;
+              font-weight: 600;
+              margin-top: 25px;
+              margin-bottom: 15px;
+              padding-bottom: 8px;
+              border-bottom: 1px solid #eaeaea;
+            }
+            
+            p {
+              margin-bottom: 15px;
+              color: #000000;
+            }
+            
+            ul {
+              padding-left: 20px;
+              margin-bottom: 20px;
+            }
+            
+            li {
+              margin-bottom: 8px;
+              color: #000000;
+            }
+            
+            .recipe-list {
+              background-color: #f5f8ff;
+              border-radius: 8px;
+              padding: 15px 20px;
+              margin-top: 10px;
+            }
+            
+            .shopping-list {
+              background-color: #f5fff8;
+              border-radius: 8px;
+              padding: 15px 20px; 
+              margin-top: 10px;
+            }
+            
+            .footer {
+              margin-top: 30px;
+              padding: 20px 30px;
+              background-color: #f0f5ff;
+              border-top: 1px solid #eaeaea;
+              font-size: 14px;
+              color: #000000;
+              text-align: center;
+            }
+            
+            .highlight {
+              font-weight: 500;
+              color: #000000;
+            }
+            
+            @media only screen and (max-width: 480px) {
+              .container {
+                margin: 10px;
+              }
+              
+              .header, .content, .footer {
+                padding: 20px;
+              }
+              
+              h1 {
+                font-size: 22px;
+              }
+            }
           </style>
         </head>
         <body>
-          <h1>Your Customized Grocery List is Ready!</h1>
-          <p>Dear ${name},</p>
-          <p>We hope this message finds you well!</p>
-          <p>Attached is your personalized grocery list, designed to make your shopping experience easier and more efficient. Here is the menu you selected:</p>
-          
-          <ul>
-            ${recipeListHTML}
-          </ul>
-          
-          <h2>Your Shopping List</h2>
-          ${shoppingListItems}
-          
-          <p>If you have any questions or need further assistance, please contact us via the JagMyChef app, as responses to this email are unmonitored.</p>
-          
-          <div class="footer">
-            <p>Thank you,<br>GroGenie, Jag My Chef.</p>
+          <div class="container">
+            <div class="header">
+              <img src="https://1p7ctab0bz.ufs.sh/f/LSctCnwEvjMcbzQNr1TkFKWqywc8i6h2PtmJBgXDVeLSMrla" alt="GroGenie Logo" class="logo">
+            </div>
+            
+            <div class="content">
+              <h1>Your Customized Grocery List is Ready!</h1>
+              
+              <p>Dear <span class="highlight">${name}</span>,</p>
+              
+              <p>We hope this message finds you well!</p>
+              
+              <p>Attached is your personalized grocery list, designed to make your shopping experience easier and more efficient. Here is the menu you selected:</p>
+              
+              <h2>Your Selected Recipes</h2>
+              <div class="recipe-list">
+                <ul>
+                  ${recipeListHTML}
+                </ul>
+              </div>
+              
+              <h2>Your Shopping List</h2>
+              <div class="shopping-list">
+                ${shoppingListItems}
+              </div>
+              
+              <p>If you have any questions or need further assistance, please contact us via the JagMyChef app, as responses to this email are unmonitored.</p>
+            </div>
+            
+            <div class="footer">
+              <p>Thank you,<br><strong>GroGenie, Jag My Chef</strong></p>
+            </div>
           </div>
         </body>
       </html>
@@ -62,7 +189,7 @@ export async function POST(request: Request) {
 
     // Send email using Resend
     const { data, error } = await resend.emails.send({
-      from: "no-reply@zepresume.com",
+      from: "GroGenie <no-reply@zepresume.com>",
       to,
       subject,
       html: htmlContent,
