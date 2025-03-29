@@ -2,9 +2,8 @@
 "use client";
 
 import { useState } from "react";
-import { Trash2, MoreHorizontal } from "lucide-react";
+import { Trash2, MoreHorizontal, Edit } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Ingredient } from "@prisma/client";
 
 import {
   Table,
@@ -33,8 +32,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+interface Ingredient {
+  id: string;
+  name: string;
+  quantity: string;
+  unit: string;
+  isCreated?: boolean;
+}
+
 interface IngredientTableProps {
-  ingredients: (Ingredient & { recipe: { name: string } })[];
+  ingredients: Ingredient[];
 }
 
 export function IngredientTable({ ingredients }: IngredientTableProps) {
@@ -78,9 +85,8 @@ export function IngredientTable({ ingredients }: IngredientTableProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>Quantity</TableHead>
+              <TableHead>Default Quantity</TableHead>
               <TableHead>Unit</TableHead>
-              <TableHead>Recipe</TableHead>
               <TableHead className='w-[100px]'>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -99,26 +105,11 @@ export function IngredientTable({ ingredients }: IngredientTableProps) {
                   </TableCell>
                   <TableCell>{ingredient.quantity}</TableCell>
                   <TableCell>{ingredient.unit}</TableCell>
-                  <TableCell>{ingredient.recipe.name}</TableCell>
                   <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant='ghost' className='h-8 w-8 p-0'>
-                          <span className='sr-only'>Open menu</span>
-                          <MoreHorizontal className='h-4 w-4' />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align='end'>
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem
-                          onClick={() => confirmDelete(ingredient.id)}
-                          className='text-red-600'
-                        >
-                          <Trash2 className='mr-2 h-4 w-4' />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button onClick={() => onEdit(ingredient)}>
+                      <Edit className='mr-2 h-4 w-4' />
+                      Edit
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))

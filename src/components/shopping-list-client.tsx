@@ -212,12 +212,14 @@ export function ShoppingListClient() {
       </div>
 
       <div className='my-6'>
-        <ShoppingListActions
-          shoppingList={shoppingList}
-          selectedRecipeIds={selectedRecipeIds}
-          selectedRecipes={selectedRecipes}
-          checkedItems={checkedItems}
-        />
+        {selectedRecipeIds.length !== 0 && (
+          <ShoppingListActions
+            shoppingList={shoppingList}
+            selectedRecipeIds={selectedRecipeIds}
+            selectedRecipes={selectedRecipes}
+            checkedItems={checkedItems}
+          />
+        )}
       </div>
     </>
   );

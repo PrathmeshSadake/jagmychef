@@ -32,6 +32,9 @@ export default async function AdminPage() {
 
   // Fetch ingredients with their recipe names
   const ingredients = await prisma.ingredient.findMany({
+    where: {
+      isCreated: true,
+    },
     include: {
       recipe: {
         select: {
@@ -168,7 +171,6 @@ export default async function AdminPage() {
             </div>
           </CardContent>
         </Card>
-        
       </div>
 
       <div className='mt-8'>

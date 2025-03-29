@@ -20,7 +20,6 @@ export async function POST(request: NextRequest) {
       recipeIds
     );
 
-    console.log(ingredientsByCategory);
 
     return NextResponse.json(ingredientsByCategory);
   } catch (error) {
