@@ -124,6 +124,12 @@ export default async function AdminPage() {
               Manage Units
             </Button>
           </Link>
+          <Link href='/admin/manage-ingredients'>
+            <Button className='gap-1'>
+              <Plus className='h-4 w-4' />
+              Manage Ingredients
+            </Button>
+          </Link>
         </div>
       </div>
 
