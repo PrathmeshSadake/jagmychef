@@ -35,24 +35,279 @@ interface ListDownloadButtonProps {
 
 export function ListDownloadButton({ list }: ListDownloadButtonProps) {
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Convert shopping list to a simple text format for the AI
+  const formatShoppingListForAI = () => {
+    let itemsList = "";
+
+    list.recipes.forEach((recipe) => {
+      recipe.ingredients.forEach((ingredient) => {
+        itemsList += `${ingredient.quantity} ${ingredient.unit} ${ingredient.name}, `;
+      });
+    });
+
+    return itemsList.trim();
+  };
+
+  // Send items to OpenAI and get organized grocery list
+  const getOrganizedList = async () => {
+    try {
+      setIsLoading(true);
+      const itemsText = formatShoppingListForAI();
+
+      const response = await fetch("/api/generate-list", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          items: itemsText,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate organized list");
+      }
+
+      const data = await response.json();
+      return data.groceryList;
+    } catch (error) {
+      console.error("Error generating organized list:", error);
+      toast.error("Failed to organize shopping list");
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handlePdfDownload = async () => {
     try {
       setIsDownloading(true);
-      const doc = new jsPDF();
 
-      // Set initial positions
+      // Get organized shopping list from AI
+      const organizedList = await getOrganizedList();
+
+      // Initialize PDF document
+      const doc = new jsPDF();
       const marginLeft = 20;
+
+      // ===== FIRST PAGE - CUSTOMER COPY =====
       let currentY = 20;
 
-      // Add title
-      doc.setFontSize(20);
+      // Add header
+      doc.setFontSize(16);
       doc.setFont("helvetica", "bold");
-      doc.text(list.name, marginLeft, currentY);
+      doc.text(
+        "CUSTOMER COPY",
+        doc.internal.pageSize.getWidth() / 2,
+        currentY,
+        { align: "center" }
+      );
+      currentY += 20;
+
+      // Add Shopping List title
+      doc.setFontSize(18);
+      doc.text("Shopping List", marginLeft, currentY);
+      currentY += 15;
+
+      // Add customer info
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Name: ${list.name}`, marginLeft, currentY);
+      currentY += 6;
+      doc.text(
+        `Appointment Date: ${list.Date ? format(list.Date, "dd-MM-yyyy") : ""}`,
+        marginLeft,
+        currentY
+      );
+      currentY += 6;
+      doc.text(
+        `Appointment Day: ${list.Date ? format(list.Date, "EEEE") : ""}`,
+        marginLeft,
+        currentY
+      );
+      currentY += 15;
+
+      // If we have an organized list from the AI, use it
+      if (organizedList && organizedList.categories) {
+        organizedList.categories.forEach((category: any) => {
+          // Check if we need a new page
+          if (currentY > 250) {
+            doc.addPage();
+            currentY = 20;
+          }
+
+          // Category name
+          doc.setFontSize(14);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(66, 135, 245);
+          doc.text(category.name, marginLeft, currentY);
+          currentY += 10;
+
+          // Reset text color
+          doc.setTextColor(0, 0, 0);
+          doc.setFontSize(12);
+          doc.setFont("helvetica", "normal");
+
+          // Category items
+          category.items.forEach((item: any) => {
+            const itemText = `• ${item.quantity} ${item.unit || ""} ${item.name}`;
+            doc.text(itemText, marginLeft, currentY);
+            currentY += 6;
+          });
+
+          currentY += 5;
+        });
+      } else {
+        // Fallback to a simple categorized list if AI fails
+        const categories: any = {
+          Dairy: [],
+          Proteins: [],
+          Produce: [],
+          Condiments: [],
+          Other: [],
+        };
+
+        // Simple categorization logic
+        list.recipes.forEach((recipe) => {
+          recipe.ingredients.forEach((ingredient) => {
+            const name = ingredient.name.toLowerCase();
+            if (
+              name.includes("yogurt") ||
+              name.includes("cheese") ||
+              name.includes("milk") ||
+              name.includes("cream")
+            ) {
+              categories.Dairy.push(ingredient);
+            } else if (
+              name.includes("chicken") ||
+              name.includes("beef") ||
+              name.includes("fish") ||
+              name.includes("meat")
+            ) {
+              categories.Proteins.push(ingredient);
+            } else if (
+              name.includes("onion") ||
+              name.includes("tomato") ||
+              name.includes("carrot") ||
+              name.includes("lettuce") ||
+              name.includes("vegetable")
+            ) {
+              categories.Produce.push(ingredient);
+            } else if (
+              name.includes("sauce") ||
+              name.includes("paste") ||
+              name.includes("oil") ||
+              name.includes("vinegar") ||
+              name.includes("spice")
+            ) {
+              categories.Condiments.push(ingredient);
+            } else {
+              categories.Other.push(ingredient);
+            }
+          });
+        });
+
+        // Display each category
+        Object.entries(categories).forEach(
+          ([categoryName, items]: [any, any]) => {
+            if (items.length === 0) return;
+
+            // Check if we need a new page
+            if (currentY > 250) {
+              doc.addPage();
+              currentY = 20;
+            }
+
+            // Category name
+            doc.setFontSize(14);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(66, 135, 245);
+            doc.text(categoryName, marginLeft, currentY);
+            currentY += 10;
+
+            // Reset text color
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "normal");
+
+            // Category items
+            items.forEach((ingredient: any) => {
+              const itemText = `• ${ingredient.quantity} ${ingredient.unit} ${ingredient.name}`;
+              doc.text(itemText, marginLeft, currentY);
+              currentY += 6;
+            });
+
+            currentY += 5;
+          }
+        );
+      }
+
+      // Add customer prep instructions section - grouped by all recipes
+      doc.addPage();
+      currentY = 20;
+
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(66, 135, 245);
+      doc.text("Customer Preparation Instructions", marginLeft, currentY);
       currentY += 10;
 
+      // Reset text color
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(12);
+
+      // Collect and display all customer instructions
+      let instructionCount = 1;
+      list.recipes.forEach((recipe) => {
+        if (recipe.instructions && recipe.instructions.length > 0) {
+          doc.setFont("helvetica", "bold");
+          doc.text(`For ${recipe.name}:`, marginLeft, currentY);
+          currentY += 6;
+          doc.setFont("helvetica", "normal");
+
+          recipe.instructions.forEach((instruction) => {
+            const splitInstruction = doc.splitTextToSize(
+              `${instructionCount}. ${instruction}`,
+              170
+            );
+            doc.text(splitInstruction, marginLeft, currentY);
+            currentY += 6 * splitInstruction.length;
+            instructionCount++;
+
+            // Check if we need a new page
+            if (currentY > 270) {
+              doc.addPage();
+              currentY = 20;
+            }
+          });
+
+          currentY += 5;
+        }
+      });
+
+      // ===== OFFICE USE SECTION =====
+      doc.addPage();
+      currentY = 20;
+
+      // Add header
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text(
+        "FOR OFFICE USE ONLY",
+        doc.internal.pageSize.getWidth() / 2,
+        currentY,
+        { align: "center" }
+      );
+      currentY += 20;
+
+      // Add title/name
+      doc.setFontSize(18);
+      doc.text(list.name, marginLeft, currentY);
+      currentY += 15;
+
       // Add user info
-      currentY += 5;
       doc.setFontSize(12);
       doc.setFont("helvetica", "normal");
       doc.text(`Email: ${list.email || ""}`, marginLeft, currentY);
@@ -70,18 +325,18 @@ export function ListDownloadButton({ list }: ListDownloadButtonProps) {
         marginLeft,
         currentY
       );
-      currentY += 10;
+      currentY += 15;
 
-      // Recipes section
+      // Recipes section - each recipe starts on a new page
       list.recipes.forEach((recipe, recipeIndex) => {
-        // Check if we need a new page
-        if (currentY > 250) {
+        // Start each recipe on a new page (except the first one)
+        if (recipeIndex > 0) {
           doc.addPage();
           currentY = 20;
         }
 
         // Recipe name
-        doc.setFontSize(16);
+        doc.setFontSize(14);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(66, 135, 245);
         doc.text(
@@ -163,15 +418,15 @@ export function ListDownloadButton({ list }: ListDownloadButtonProps) {
           currentY += 6;
           doc.setFont("helvetica", "normal");
 
-          recipe.chefInstructions.forEach((instruction) => {
-            const splitInstruction = doc.splitTextToSize(instruction, 170);
+          recipe.chefInstructions.forEach((instruction, idx) => {
+            const splitInstruction = doc.splitTextToSize(
+              `${idx + 1}. ${instruction}`,
+              170
+            );
             doc.text(splitInstruction, marginLeft, currentY);
             currentY += 6 * splitInstruction.length;
           });
         }
-
-        // Add space between recipes
-        currentY += 10;
       });
 
       // Save the PDF
@@ -188,11 +443,11 @@ export function ListDownloadButton({ list }: ListDownloadButtonProps) {
   return (
     <Button
       onClick={handlePdfDownload}
-      disabled={isDownloading}
+      disabled={isDownloading || isLoading}
       className='flex items-center gap-2'
     >
       <DownloadIcon className='h-4 w-4' />
-      Download List
+      {isDownloading || isLoading ? "Generating..." : "Download List"}
     </Button>
   );
 }
