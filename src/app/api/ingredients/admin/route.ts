@@ -1,5 +1,5 @@
 import prisma from "@/lib/db";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   try {
@@ -117,6 +117,48 @@ export async function POST(request: Request) {
     console.error("Error creating ingredient:", error);
     return NextResponse.json(
       { error: "Failed to create ingredient" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: "Recipe ID is required" },
+        { status: 400 }
+      );
+    }
+    const body = await request.json();
+
+    // Validate the request body
+    if (!body.name && !body.quantity && !body.unit) {
+      return NextResponse.json(
+        { error: "At least one field must be provided" },
+        { status: 400 }
+      );
+    }
+
+    // Update the ingredient in the database
+    // Replace this with your actual database update logic
+    const updatedIngredient = await prisma.ingredient.update({
+      where: { id },
+      data: {
+        name: body.name,
+        quantity: body.quantity,
+        unit: body.unit,
+      },
+    });
+
+    return NextResponse.json(updatedIngredient);
+  } catch (error) {
+    console.error("Error updating ingredient:", error);
+    return NextResponse.json(
+      { error: "Failed to update ingredient" },
       { status: 500 }
     );
   }

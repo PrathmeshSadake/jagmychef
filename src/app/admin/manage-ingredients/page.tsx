@@ -48,6 +48,7 @@ export default function IngredientManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0); // Add a refresh key state
 
   // Form state
   const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(
@@ -60,6 +61,7 @@ export default function IngredientManagement() {
   // Fetch ingredients
   useEffect(() => {
     const fetchIngredients = async () => {
+      setIsLoading(true);
       try {
         const response = await fetch("/api/ingredients/admin?isCreated=true");
         if (!response.ok) {
@@ -75,7 +77,7 @@ export default function IngredientManagement() {
     };
 
     fetchIngredients();
-  }, []);
+  }, [refreshKey]); // Depend on refreshKey
 
   // Fetch units
   useEffect(() => {
@@ -96,6 +98,10 @@ export default function IngredientManagement() {
 
     fetchUnits();
   }, []);
+
+  const refreshIngredients = () => {
+    setRefreshKey((prev) => prev + 1); // Increment to trigger refresh
+  };
 
   const openAddDialog = () => {
     setEditingIngredient(null);
@@ -179,9 +185,6 @@ export default function IngredientManagement() {
         throw new Error(errorText || "Failed to save ingredient");
       }
 
-      // Refresh data
-      router.refresh();
-
       // Close dialog and reset form
       setIsDialogOpen(false);
       setName("");
@@ -189,14 +192,11 @@ export default function IngredientManagement() {
       setQuantity("1");
       setEditingIngredient(null);
 
-      // Refetch ingredients to update the list
-      const updatedResponse = await fetch(
-        "/api/ingredients/admin?isCreated=true"
-      );
-      if (updatedResponse.ok) {
-        const updatedData = await updatedResponse.json();
-        setIngredients(updatedData);
-      }
+      // Refresh data after a short delay to ensure backend has processed
+      setTimeout(() => {
+        refreshIngredients();
+        router.refresh();
+      }, 300);
     } catch (error) {
       console.error("Error saving ingredient:", error);
       setError(
@@ -227,10 +227,7 @@ export default function IngredientManagement() {
           ingredient.
         </div>
       ) : (
-        <IngredientTable
-          ingredients={ingredients}
-          // onEdit={openEditDialog as any}
-        />
+        <IngredientTable ingredients={ingredients} />
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

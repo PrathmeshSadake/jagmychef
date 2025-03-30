@@ -29,10 +29,6 @@ export async function PUT(request: NextRequest) {
     const id = searchParams.get("id");
 
     if (!id) {
-      return new NextResponse(null, { status: 500 });
-    }
-
-    if (!id) {
       return NextResponse.json(
         { success: false, error: "Recipe ID is required" },
         { status: 400 }
