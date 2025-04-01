@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { Edit } from "lucide-react";
+import { Edit, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -50,6 +50,7 @@ export function IngredientTable({
     null
   );
   const [isLoading, setIsLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
 
   const handleEditClick = (ingredient: Ingredient) => {
@@ -110,44 +111,65 @@ export function IngredientTable({
     }
   };
 
+  // Filter ingredients based on search term
+  const filteredIngredients = ingredients.filter(
+    (ingredient) =>
+      ingredient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ingredient.unit.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <>
-      <div className='rounded-md border'>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Default Quantity</TableHead>
-              <TableHead>Unit</TableHead>
-              <TableHead className='w-[100px]'>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {ingredients.length === 0 ? (
+      <div className='space-y-4'>
+        <div className='flex items-center gap-2 relative'>
+          <Search className='absolute left-3 h-4 w-4 text-gray-400' />
+          <Input
+            placeholder='Search ingredients by name or unit...'
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className='pl-9'
+          />
+        </div>
+
+        <div className='rounded-md border'>
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={5} className='text-center py-6'>
-                  No ingredients found.
-                </TableCell>
+                <TableHead>Name</TableHead>
+                <TableHead>Default Quantity</TableHead>
+                <TableHead>Unit</TableHead>
+                <TableHead className='w-[100px]'>Actions</TableHead>
               </TableRow>
-            ) : (
-              ingredients.map((ingredient) => (
-                <TableRow key={ingredient.id}>
-                  <TableCell className='font-medium'>
-                    {ingredient.name}
-                  </TableCell>
-                  <TableCell>{ingredient.quantity}</TableCell>
-                  <TableCell>{ingredient.unit}</TableCell>
-                  <TableCell>
-                    <Button onClick={() => handleEditClick(ingredient)}>
-                      <Edit className='mr-2 h-4 w-4' />
-                      Edit
-                    </Button>
+            </TableHeader>
+            <TableBody>
+              {filteredIngredients.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className='text-center py-6'>
+                    {searchTerm
+                      ? "No ingredients found matching your search."
+                      : "No ingredients found."}
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : (
+                filteredIngredients.map((ingredient) => (
+                  <TableRow key={ingredient.id}>
+                    <TableCell className='font-medium'>
+                      {ingredient.name}
+                    </TableCell>
+                    <TableCell>{ingredient.quantity}</TableCell>
+                    <TableCell>{ingredient.unit}</TableCell>
+                    <TableCell>
+                      <Button onClick={() => handleEditClick(ingredient)}>
+                        <Edit className='mr-2 h-4 w-4' />
+                        Edit
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       <AlertDialog open={isEditing} onOpenChange={setIsEditing}>

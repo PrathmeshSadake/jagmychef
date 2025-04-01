@@ -11,6 +11,7 @@ import { toast, Toaster } from "sonner";
 import { useAtom } from "jotai";
 import { recipesDataAtom, selectedRecipeIdsAtom } from "@/lib/atoms";
 import Link from "next/link";
+import RecipeRequestButton from "./recipe-request-btn";
 
 type SearchResult = {
   id: string;
@@ -170,6 +171,9 @@ export default function SearchBar() {
           </CardContent>
         </Card>
       )}
+
+      <RecipeRequestButton />
+      <Toaster />
     </div>
   );
 }

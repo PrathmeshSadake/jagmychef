@@ -4,7 +4,16 @@ import type React from "react";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, Upload, X, Loader2, Search } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Upload,
+  X,
+  Loader2,
+  Search,
+  MoveUp,
+  MoveDown,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,6 +42,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Slider } from "@/components/ui/slider";
+import { Alert, AlertTitle } from "@/components/ui/alert";
 
 // Define proper types
 interface Ingredient {
@@ -98,6 +109,14 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
   const [categoryLoading, setCategoryLoading] = useState<boolean>(true);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
 
+  // New category dialog state
+  const [newCategoryDialogOpen, setNewCategoryDialogOpen] =
+    useState<boolean>(false);
+  const [newCategoryName, setNewCategoryName] = useState<string>("");
+  const [addingCategory, setAddingCategory] = useState<boolean>(false);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
+  const [categorySuccess, setCategorySuccess] = useState<string | null>(null);
+
   // Units state
   const [units, setUnits] = useState<Unit[]>([]);
   const [unitsLoading, setUnitsLoading] = useState<boolean>(true);
@@ -116,23 +135,29 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
     recipe?.chefInstructions || [""]
   );
 
-  // Fetch categories from API
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch("/api/categories");
-        if (!response.ok) {
-          throw new Error("Failed to fetch categories");
-        }
-        const data = await response.json();
-        setCategories(data);
-        setCategoryLoading(false);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-        setCategoryLoading(false);
-      }
-    };
+  // Image editing states
+  const [brightness, setBrightness] = useState<number>(100);
+  const [rotation, setRotation] = useState<number>(0);
+  const [showImageTools, setShowImageTools] = useState<boolean>(false);
 
+  // Fetch categories from API
+  const fetchCategories = async () => {
+    try {
+      setCategoryLoading(true);
+      const response = await fetch("/api/categories");
+      if (!response.ok) {
+        throw new Error("Failed to fetch categories");
+      }
+      const data = await response.json();
+      setCategories(data);
+      setCategoryLoading(false);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      setCategoryLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchCategories();
   }, []);
 
@@ -208,6 +233,24 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
     setIngredients(newIngredients);
   };
 
+  const moveIngredientUp = (index: number) => {
+    if (index === 0) return;
+    const newIngredients = [...ingredients];
+    const temp = newIngredients[index];
+    newIngredients[index] = newIngredients[index - 1];
+    newIngredients[index - 1] = temp;
+    setIngredients(newIngredients);
+  };
+
+  const moveIngredientDown = (index: number) => {
+    if (index === ingredients.length - 1) return;
+    const newIngredients = [...ingredients];
+    const temp = newIngredients[index];
+    newIngredients[index] = newIngredients[index + 1];
+    newIngredients[index + 1] = temp;
+    setIngredients(newIngredients);
+  };
+
   const selectSavedIngredient = (
     index: number,
     savedIngredient: SavedIngredient
@@ -215,7 +258,8 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
     const newIngredients = [...ingredients];
     newIngredients[index] = {
       name: savedIngredient.name,
-      quantity: savedIngredient.quantity,
+      // Don't auto-populate quantity as requested
+      quantity: "",
       unit: savedIngredient.unit,
     };
     setIngredients(newIngredients);
@@ -256,6 +300,53 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
     );
   };
 
+  const handleCreateCategory = async () => {
+    if (!newCategoryName.trim()) {
+      setCategoryError("Category name is required");
+      return;
+    }
+
+    try {
+      setAddingCategory(true);
+      setCategoryError(null);
+
+      const response = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newCategoryName }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create category");
+      }
+
+      const newCategory = await response.json();
+
+      // Update categories list
+      setCategories([...categories, newCategory]);
+
+      // Select the newly created category
+      setSelectedCategories([...selectedCategories, newCategory]);
+
+      // Reset form
+      setNewCategoryName("");
+      setCategorySuccess("Category created successfully");
+
+      // Close dialog after a short delay to show success message
+      setTimeout(() => {
+        setNewCategoryDialogOpen(false);
+        setCategorySuccess(null);
+      }, 1500);
+    } catch (error) {
+      console.error("Error creating category:", error);
+      setCategoryError(
+        error instanceof Error ? error.message : "An unexpected error occurred"
+      );
+    } finally {
+      setAddingCategory(false);
+    }
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -263,6 +354,10 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
+        setShowImageTools(true);
+        // Reset image editing values
+        setBrightness(100);
+        setRotation(0);
       };
       reader.readAsDataURL(file);
     }
@@ -301,6 +396,7 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
     instructions.forEach((instruction) => {
       formData.append("instruction", instruction);
     });
+
     // Add chef instructions to formData
     chefInstructions.forEach((chefInstruction) => {
       formData.append("chefInstruction", chefInstruction);
@@ -314,6 +410,13 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
     // Handle image upload if there's a new image
     if (imageFile) {
       formData.set("image", imageFile);
+      // Add image editing parameters if they were changed
+      if (brightness !== 100) {
+        formData.append("brightness", brightness.toString());
+      }
+      if (rotation !== 0) {
+        formData.append("rotation", rotation.toString());
+      }
     } else if (imagePreview) {
       formData.set("image", imagePreview);
     }
@@ -422,6 +525,85 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                 >
                   <Plus className='h-4 w-4' />
                 </Button>
+
+                {/* New "Add New Category" Button */}
+                <Dialog
+                  open={newCategoryDialogOpen}
+                  onOpenChange={setNewCategoryDialogOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button
+                      type='button'
+                      variant='secondary'
+                      disabled={isSubmitting}
+                    >
+                      Add New Category
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Create New Category</DialogTitle>
+                      <DialogDescription>
+                        Add a new category that will be available for all
+                        recipes.
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    {categoryError && (
+                      <Alert variant='destructive'>
+                        <AlertTitle>{categoryError}</AlertTitle>
+                      </Alert>
+                    )}
+
+                    {categorySuccess && (
+                      <Alert>
+                        <AlertTitle>{categorySuccess}</AlertTitle>
+                      </Alert>
+                    )}
+
+                    <div className='grid gap-4 py-4'>
+                      <div className='grid gap-2'>
+                        <Label htmlFor='new-category-name'>Category Name</Label>
+                        <Input
+                          id='new-category-name'
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          placeholder='Enter category name'
+                          disabled={addingCategory}
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        onClick={() => {
+                          setNewCategoryDialogOpen(false);
+                          setNewCategoryName("");
+                          setCategoryError(null);
+                          setCategorySuccess(null);
+                        }}
+                        disabled={addingCategory}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type='button'
+                        onClick={handleCreateCategory}
+                        disabled={!newCategoryName.trim() || addingCategory}
+                      >
+                        {addingCategory ? (
+                          <>
+                            <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                            Creating...
+                          </>
+                        ) : (
+                          "Create Category"
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
 
@@ -446,20 +628,105 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                       src={imagePreview}
                       alt='Recipe preview'
                       className='w-full rounded-md'
-                    />
-                    <Button
-                      type='button'
-                      variant='outline'
-                      size='sm'
-                      className='mt-2'
-                      onClick={() => {
-                        setImagePreview("");
-                        setImageFile(null);
+                      style={{
+                        filter: `brightness(${brightness}%)`,
+                        transform: `rotate(${rotation}deg)`,
                       }}
-                      disabled={isSubmitting}
-                    >
-                      Remove Image
-                    </Button>
+                    />
+
+                    {/* Image editing tools */}
+                    {showImageTools && (
+                      <div className='mt-4 space-y-4'>
+                        <div>
+                          <Label htmlFor='brightness'>Brightness</Label>
+                          <div className='flex items-center gap-2'>
+                            <span className='text-sm'>0%</span>
+                            <Slider
+                              id='brightness'
+                              min={0}
+                              max={200}
+                              step={5}
+                              value={[brightness]}
+                              onValueChange={(values) =>
+                                setBrightness(values[0])
+                              }
+                              disabled={isSubmitting}
+                              className='flex-1'
+                            />
+                            <span className='text-sm'>200%</span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label htmlFor='rotation'>Rotation</Label>
+                          <div className='flex items-center gap-2'>
+                            <span className='text-sm'>-180°</span>
+                            <Slider
+                              id='rotation'
+                              min={-180}
+                              max={180}
+                              step={90}
+                              value={[rotation]}
+                              onValueChange={(values) => setRotation(values[0])}
+                              disabled={isSubmitting}
+                              className='flex-1'
+                            />
+                            <span className='text-sm'>180°</span>
+                          </div>
+                        </div>
+
+                        <div className='flex justify-between'>
+                          <Button
+                            type='button'
+                            variant='outline'
+                            size='sm'
+                            onClick={() => {
+                              setBrightness(100);
+                              setRotation(0);
+                            }}
+                            disabled={isSubmitting}
+                          >
+                            Reset
+                          </Button>
+                          <Button
+                            type='button'
+                            variant='outline'
+                            size='sm'
+                            onClick={() => setShowImageTools(false)}
+                            disabled={isSubmitting}
+                          >
+                            Hide Tools
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className='flex justify-between mt-2'>
+                      {!showImageTools && (
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='sm'
+                          onClick={() => setShowImageTools(true)}
+                          disabled={isSubmitting}
+                        >
+                          Edit Image
+                        </Button>
+                      )}
+                      <Button
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        onClick={() => {
+                          setImagePreview("");
+                          setImageFile(null);
+                          setShowImageTools(false);
+                        }}
+                        disabled={isSubmitting}
+                      >
+                        Remove Image
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <>
@@ -577,7 +844,7 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                               >
                                 <span className='font-medium'>{item.name}</span>
                                 <span className='text-sm text-muted-foreground'>
-                                  {item.quantity} {item.unit}
+                                  {item.unit}
                                 </span>
                               </button>
                             ))
@@ -631,6 +898,33 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Reordering buttons */}
+                <div className='flex flex-col gap-1 mt-5'>
+                  <Button
+                    type='button'
+                    size='icon'
+                    variant='ghost'
+                    onClick={() => moveIngredientUp(index)}
+                    disabled={index === 0 || isSubmitting}
+                    aria-label='Move ingredient up'
+                    className='h-6 w-6'
+                  >
+                    <MoveUp className='h-4 w-4' />
+                  </Button>
+                  <Button
+                    type='button'
+                    size='icon'
+                    variant='ghost'
+                    onClick={() => moveIngredientDown(index)}
+                    disabled={index === ingredients.length - 1 || isSubmitting}
+                    aria-label='Move ingredient down'
+                    className='h-6 w-6'
+                  >
+                    <MoveDown className='h-4 w-4' />
+                  </Button>
+                </div>
+
                 <Button
                   type='button'
                   size='icon'
