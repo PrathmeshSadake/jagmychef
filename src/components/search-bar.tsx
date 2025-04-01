@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useDebounce } from "@/hooks/use-debounce";
 import { SearchIcon } from "lucide-react";
@@ -171,8 +171,17 @@ export default function SearchBar() {
           </CardContent>
         </Card>
       )}
-
-      <RecipeRequestButton />
+      <div className='flex space-x-4 items-center my-4 justify-center w-full'>
+        <RecipeRequestButton />
+        <Link
+          href={"/recipes"}
+          className={buttonVariants({
+            variant: "default",
+          })}
+        >
+          View all Recipes
+        </Link>
+      </div>
       <Toaster />
     </div>
   );

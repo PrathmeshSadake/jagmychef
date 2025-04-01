@@ -15,15 +15,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { useAtom } from "jotai";
+import { userDetailsAtom } from "@/lib/atoms";
 
 export default function RecipeRequestButton() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [userDetails] = useAtom(userDetailsAtom);
+
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     link: "",
-    email: "",
+    email: userDetails ? userDetails.email : "",
   });
 
   const handleInputChange = (e: any) => {
@@ -34,13 +38,8 @@ export default function RecipeRequestButton() {
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.description || !formData.email) {
+    if (!formData.name || !formData.description) {
       toast.error("Please fill in all required fields");
-      return;
-    }
-
-    if (formData.email && !formData.email.includes("@")) {
-      toast.error("Please enter a valid email address");
       return;
     }
 
@@ -73,11 +72,11 @@ export default function RecipeRequestButton() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant='outline' className='w-full mt-3'>
+        <Button variant='outline' className=''>
           Request a Recipe
         </Button>
       </DialogTrigger>
-      <DialogContent className='sm:max-w-[425px]'>
+      <DialogContent className='w-full'>
         <DialogHeader>
           <DialogTitle>Request a Recipe</DialogTitle>
           <DialogDescription>
@@ -110,6 +109,7 @@ export default function RecipeRequestButton() {
                 value={formData.description}
                 onChange={handleInputChange}
                 className='col-span-3'
+                placeholder='Please describe the recipe in your own words.'
                 required
               />
             </div>
@@ -124,21 +124,6 @@ export default function RecipeRequestButton() {
                 onChange={handleInputChange}
                 className='col-span-3'
                 placeholder='URL to recipe reference'
-              />
-            </div>
-            <div className='grid grid-cols-4 items-center gap-4'>
-              <Label htmlFor='email' className='text-right'>
-                Your Email*
-              </Label>
-              <Input
-                id='email'
-                name='email'
-                type='email'
-                value={formData.email}
-                onChange={handleInputChange}
-                className='col-span-3'
-                placeholder="To notify you when it's added"
-                required
               />
             </div>
           </div>

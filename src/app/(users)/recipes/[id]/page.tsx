@@ -67,34 +67,6 @@ export default async function RecipeDetailPage({ params }: { params: any }) {
                 "A delicious recipe with carefully selected ingredients that will delight your taste buds and impress your guests."}
             </p>
           </div>
-
-          <div>
-            <h2 className='text-xl font-semibold mb-3'>
-              Customer Prep Instructions
-            </h2>
-            <ol className='space-y-4 ml-5 list-decimal'>
-              {recipe.instructions?.map((step: any, index: any) => (
-                <li key={index} className='text-muted-foreground'>
-                  {step}
-                </li>
-              )) || (
-                <>
-                  <li className='text-muted-foreground'>
-                    Prepare all ingredients as listed.
-                  </li>
-                  <li className='text-muted-foreground'>
-                    Mix the ingredients in a large bowl.
-                  </li>
-                  <li className='text-muted-foreground'>
-                    Cook according to the specified temperature and time.
-                  </li>
-                  <li className='text-muted-foreground'>
-                    Serve hot and enjoy your meal!
-                  </li>
-                </>
-              )}
-            </ol>
-          </div>
         </div>
 
         <div className='space-y-6'>
@@ -133,10 +105,37 @@ export default async function RecipeDetailPage({ params }: { params: any }) {
                 </>
               )}
             </ul>
-            <Separator className='my-4' />
-            <ShoppingListButton recipe={recipe} />
           </div>
 
+          <div>
+            <h2 className='text-xl font-semibold mb-3'>
+              Prep Instructions for the Dish
+            </h2>
+            <ol className='space-y-4 ml-5 list-decimal'>
+              {recipe.instructions?.map((step: any, index: any) => (
+                <li key={index} className='text-muted-foreground'>
+                  {step}
+                </li>
+              )) || (
+                <>
+                  <li className='text-muted-foreground'>
+                    Prepare all ingredients as listed.
+                  </li>
+                  <li className='text-muted-foreground'>
+                    Mix the ingredients in a large bowl.
+                  </li>
+                  <li className='text-muted-foreground'>
+                    Cook according to the specified temperature and time.
+                  </li>
+                  <li className='text-muted-foreground'>
+                    Serve hot and enjoy your meal!
+                  </li>
+                </>
+              )}
+            </ol>
+          </div>
+          <Separator className='my-4' />
+          <ShoppingListButton recipe={recipe} />
           {/* <div className='bg-muted p-6 rounded-lg'>
             <h2 className='text-xl font-semibold mb-2'>Nutrition Facts</h2>
             <p className='text-sm text-muted-foreground mb-4'>Per serving</p>

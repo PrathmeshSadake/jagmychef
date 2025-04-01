@@ -193,9 +193,9 @@ export function ShoppingListClient() {
                             >
                               {item.name}
                             </label>
-                            <span className='text-xs text-muted-foreground ml-2'>
+                            {/* <span className='text-xs text-muted-foreground ml-2'>
                               (from {item.recipeName})
-                            </span>
+                            </span> */}
                           </div>
                           <span className='text-sm text-muted-foreground'>
                             {item.quantity} {item.unit}

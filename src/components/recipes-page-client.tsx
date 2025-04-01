@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Filter } from "lucide-react";
+import { ArrowLeft, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useAtom } from "jotai";
@@ -32,6 +32,16 @@ export default function RecipesPageClient({
   const [selectedRecipeIds] = useAtom(selectedRecipeIdsAtom);
   const [selectedRecipes] = useAtom(selectedRecipesAtom);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const recipesPerPage = 10;
+  const totalPages = Math.ceil(recipes.length / recipesPerPage);
+
+  // Get current recipes
+  const indexOfLastRecipe = currentPage * recipesPerPage;
+  const indexOfFirstRecipe = indexOfLastRecipe - recipesPerPage;
+  const currentRecipes = recipes.slice(indexOfFirstRecipe, indexOfLastRecipe);
+
   // Initialize recipes in the atom if not already there
   useEffect(() => {
     const recipeMap: Record<string, Recipe> = {};
@@ -45,6 +55,21 @@ export default function RecipesPageClient({
     }));
   }, [initialRecipes, setRecipesData]);
 
+  // Page change handlers
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   return (
     <div className='w-full container py-10 mx-auto'>
       <div className='mb-6'>
@@ -56,18 +81,22 @@ export default function RecipesPageClient({
           Back to Categories
         </Link>
       </div>
-      <div className='flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4'>
+      <div className='flex flex-col justify-between items-start md:items-center mb-8 gap-4'>
         <div>
           <h1 className='text-3xl font-bold tracking-tight'>Recipes</h1>
           <p className='text-muted-foreground mt-1'>
             Browse and select recipes to add to your shopping list.
+            <span className='font-medium'>
+              {" "}
+              Showing {recipes.length} recipes.
+            </span>
           </p>
         </div>
         <div className='flex items-center gap-2'>
-          {/* <Button variant='outline' size='sm' className='gap-1'>
+          <Button variant='outline' size='sm' className='gap-1'>
             <Filter className='h-4 w-4' />
             Filter
-          </Button> */}
+          </Button>
           <Link href='/shopping-list'>
             <Button size='sm' className='gap-1'>
               Selected ({selectedRecipes.length}/4)
@@ -77,7 +106,7 @@ export default function RecipesPageClient({
       </div>
 
       <div className='grid grid-cols-1 gap-6'>
-        {recipes.map((recipe) => (
+        {currentRecipes.map((recipe) => (
           <RecipeCard
             key={recipe.id}
             recipe={recipe as any}
@@ -88,12 +117,32 @@ export default function RecipesPageClient({
         ))}
       </div>
 
-      {recipes.length === 0 && (
-        <div className='text-center py-12'>
-          <p className='text-muted-foreground mb-4'>No recipes found</p>
-          <Link href='/admin/recipes/new'>
-            <Button>Add Your First Recipe</Button>
-          </Link>
+      {/* Pagination Controls */}
+      {recipes.length > 0 && (
+        <div className='flex justify-between items-center mt-6 pt-6 border-t'>
+          <div className='text-sm text-muted-foreground'>
+            Page {currentPage} of {totalPages}
+          </div>
+          <div className='flex gap-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={goToPreviousPage}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className='h-4 w-4 mr-1' />
+              Previous
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={goToNextPage}
+              disabled={currentPage === totalPages}
+            >
+              Next
+              <ChevronRight className='h-4 w-4 ml-1' />
+            </Button>
+          </div>
         </div>
       )}
     </div>
