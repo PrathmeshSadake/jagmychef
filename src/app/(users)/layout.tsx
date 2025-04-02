@@ -1,9 +1,11 @@
 import { ModalProvider } from "@/components/modal-provider";
 import SearchBar from "@/components/search-bar";
+import prisma from "@/lib/db";
 import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
 
 const UsersLayout = async ({ children }: { children: React.ReactNode }) => {
+  const count = await prisma.recipe.count();
   return (
     <div className='h-auto w-full max-w-md mx-auto'>
       <div className='h-16 px-3 flex justify-between items-center'>
@@ -17,7 +19,7 @@ const UsersLayout = async ({ children }: { children: React.ReactNode }) => {
         </Link>
       </div>
       <div className='my-4'>
-        <SearchBar />
+        <SearchBar recipeCount={count} />
       </div>
       {children}
       <ModalProvider />

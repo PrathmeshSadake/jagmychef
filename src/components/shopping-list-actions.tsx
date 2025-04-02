@@ -43,6 +43,9 @@ export function ShoppingListActions({
   selectedRecipes = [],
   checkedItems = {},
 }: ShoppingListActionsProps) {
+  console.log(shoppingList);
+  console.log(checkedItems);
+
   const [userDetails, setUserDetails] = useAtom(userDetailsAtom);
   const [_, setSelectedRecipeIds] = useAtom(selectedRecipeIdsAtom);
   const [isLoading, setIsLoading] = useState(false);
@@ -145,6 +148,7 @@ export function ShoppingListActions({
           name: userDetails.name,
           recipeNames: recipeNames,
           shoppingListItems: shoppingListItems,
+          selectedRecipeIds: selectedRecipeIds,
           subject: "Your Customized Grocery List is Ready!",
         }),
       });

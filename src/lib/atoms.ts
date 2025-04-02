@@ -3,7 +3,6 @@ import { atomWithStorage } from "jotai/utils";
 export interface UserDetails {
   name: string;
   email: string;
-  phoneNumber: string;
   date: any;
 }
 

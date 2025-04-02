@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import prisma from "@/lib/db";
 
 // Initialize Resend with your API key
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY!);
 
 export async function POST(request: Request) {
   try {
-    const { to, name, recipeNames, shoppingListItems, subject } =
-      await request.json();
+    const {
+      to,
+      name,
+      recipeNames,
+      shoppingListItems,
+      selectedRecipeIds,
+      subject,
+    } = await request.json();
 
     if (!to || !name) {
       return NextResponse.json(
@@ -16,11 +23,43 @@ export async function POST(request: Request) {
       );
     }
 
+    // Fetch all instructions from selected recipes
+    let allInstructions: string[] = [];
+    if (selectedRecipeIds && selectedRecipeIds.length > 0) {
+      const selectedRecipes = await prisma.recipe.findMany({
+        where: {
+          id: {
+            in: selectedRecipeIds,
+          },
+        },
+        select: {
+          instructions: true,
+        },
+      });
+
+      // Combine all instructions from all recipes
+      selectedRecipes.forEach((recipe) => {
+        if (recipe.instructions && recipe.instructions.length > 0) {
+          allInstructions = [...allInstructions, ...recipe.instructions];
+        }
+      });
+    }
+
     // Create recipe list HTML
     const recipeListHTML =
       recipeNames && recipeNames.length > 0
         ? recipeNames.map((name: string) => `<li>${name}</li>`).join("")
         : "<li>No recipes selected</li>";
+
+    // Create numbered instructions HTML
+    const instructionsHTML =
+      allInstructions.length > 0
+        ? allInstructions
+            .map(
+              (instruction, index) => `<li>${index + 1}. ${instruction}</li>`
+            )
+            .join("")
+        : "<li>No preparation instructions available</li>";
 
     // Email HTML template with improved design and logo
     const htmlContent = `
@@ -119,6 +158,13 @@ export async function POST(request: Request) {
               margin-top: 10px;
             }
             
+            .prep-instructions {
+              background-color: #fff5f8;
+              border-radius: 8px;
+              padding: 15px 20px; 
+              margin-top: 10px;
+            }
+            
             .footer {
               margin-top: 30px;
               padding: 20px 30px;
@@ -174,6 +220,13 @@ export async function POST(request: Request) {
               <h2>Your Shopping List</h2>
               <div class="shopping-list">
                 ${shoppingListItems}
+              </div>
+              
+              <h2>Prep Instructions for Your Appointment</h2>
+              <div class="prep-instructions">
+                <ol>
+                  ${instructionsHTML}
+                </ol>
               </div>
               
               <p>If you have any questions or need further assistance, please contact us via the JagMyChef app, as responses to this email are unmonitored.</p>

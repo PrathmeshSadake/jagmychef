@@ -28,7 +28,6 @@ export function UserDetailsDialog() {
   const [userDetails, setUserDetails] = useAtom(userDetailsAtom);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [showCalendar, setShowCalendar] = useState(false);
   const [errors, setErrors] = useState<Partial<UserDetails>>({});
@@ -46,10 +45,6 @@ export function UserDetailsDialog() {
       newErrors.email = "Email is invalid";
     }
 
-    if (!phoneNumber) {
-      newErrors.phoneNumber = "Phone number is required";
-    }
-
     if (!date) {
       newErrors.date = "Date is required";
     }
@@ -63,7 +58,6 @@ export function UserDetailsDialog() {
       setUserDetails({
         name,
         email,
-        phoneNumber,
         date: date ? date : Date.now(),
       });
 
@@ -119,26 +113,6 @@ export function UserDetailsDialog() {
             {errors.email && (
               <p className='col-span-3 col-start-2 text-sm text-red-500'>
                 {errors.email}
-              </p>
-            )}
-          </div>
-          <div className='grid grid-cols-4 items-center gap-4'>
-            <Label htmlFor='phone' className='text-right'>
-              Phone
-            </Label>
-            <div className='col-span-3'>
-              <PhoneInput
-                countries={["US"]}
-                addInternationalOption={false}
-                defaultCountry='US'
-                value={phoneNumber}
-                onChange={(value) => setPhoneNumber(value || "")}
-                className='file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]'
-              />
-            </div>
-            {errors.phoneNumber && (
-              <p className='col-span-3 col-start-2 text-sm text-red-500'>
-                {errors.phoneNumber}
               </p>
             )}
           </div>

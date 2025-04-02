@@ -12,6 +12,7 @@ import { useAtom } from "jotai";
 import { recipesDataAtom, selectedRecipeIdsAtom } from "@/lib/atoms";
 import Link from "next/link";
 import RecipeRequestButton from "./recipe-request-btn";
+import { cn } from "@/lib/utils";
 
 type SearchResult = {
   id: string;
@@ -20,7 +21,7 @@ type SearchResult = {
   recipeId?: string;
 };
 
-export default function SearchBar() {
+export default function SearchBar({ recipeCount }: { recipeCount: any }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [selectedRecipeIds, setSelectedRecipeIds] = useAtom(
@@ -117,15 +118,28 @@ export default function SearchBar() {
 
   return (
     <div className='w-full max-w-md mx-auto'>
-      <div className='relative'>
-        <SearchIcon className='absolute left-3 top-3 h-4 w-4 text-gray-400' />
-        <Input
-          type='text'
-          placeholder='Search recipes, categories'
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className='pl-10 pr-4 py-2'
-        />
+      <div className='flex space-x-2 items-center'>
+        <div className='relative flex-1'>
+          <SearchIcon className='absolute left-3 top-3 h-4 w-4 text-gray-400' />
+          <Input
+            type='text'
+            placeholder='Search recipes'
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className='pl-10 pr-4 py-2'
+          />
+        </div>
+        <Link
+          href={"/recipes"}
+          className={cn(
+            buttonVariants({
+              variant: "default",
+            }),
+            "max-w-fit"
+          )}
+        >
+          {`View all Recipes (${recipeCount || 0})`}
+        </Link>
       </div>
 
       {isLoading && (
@@ -173,14 +187,6 @@ export default function SearchBar() {
       )}
       <div className='flex space-x-4 items-center my-4 justify-center w-full'>
         <RecipeRequestButton />
-        <Link
-          href={"/recipes"}
-          className={buttonVariants({
-            variant: "default",
-          })}
-        >
-          View all Recipes
-        </Link>
       </div>
       <Toaster />
     </div>
