@@ -32,9 +32,6 @@ export default async function AdminPage() {
 
   // Fetch ingredients with their recipe names
   const ingredients = await prisma.ingredient.findMany({
-    where: {
-      isCreated: true,
-    },
     include: {
       recipe: {
         select: {

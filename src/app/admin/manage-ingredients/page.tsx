@@ -56,14 +56,13 @@ export default function IngredientManagement() {
   );
   const [name, setName] = useState("");
   const [unit, setUnit] = useState("");
-  const [quantity, setQuantity] = useState("1"); // Default quantity
 
   // Fetch ingredients
   useEffect(() => {
     const fetchIngredients = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch("/api/ingredients/admin?isCreated=true");
+        const response = await fetch("/api/ingredients/admin");
         if (!response.ok) {
           throw new Error("Failed to fetch ingredients");
         }
@@ -107,7 +106,6 @@ export default function IngredientManagement() {
     setEditingIngredient(null);
     setName("");
     setUnit("");
-    setQuantity("1");
     setError(null);
     setIsDialogOpen(true);
   };
@@ -116,7 +114,6 @@ export default function IngredientManagement() {
     setEditingIngredient(ingredient);
     setName(ingredient.name);
     setUnit(ingredient.unit);
-    setQuantity(ingredient.quantity);
     setError(null);
     setIsDialogOpen(true);
   };
@@ -158,7 +155,6 @@ export default function IngredientManagement() {
       const ingredientData = {
         name,
         unit,
-        quantity,
         isCreated: true,
         // For new ingredients, we need a temporary recipeId
         // This will be used in the API route to handle the case
@@ -189,7 +185,6 @@ export default function IngredientManagement() {
       setIsDialogOpen(false);
       setName("");
       setUnit("");
-      setQuantity("1");
       setEditingIngredient(null);
 
       // Refresh data after a short delay to ensure backend has processed
@@ -284,18 +279,6 @@ export default function IngredientManagement() {
                   )}
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className='grid gap-2'>
-              <Label htmlFor='quantity'>Default Quantity</Label>
-              <Input
-                id='quantity'
-                type='text'
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                placeholder='e.g. 1'
-                disabled={isSubmitting}
-              />
             </div>
 
             <DialogFooter className='pt-4'>

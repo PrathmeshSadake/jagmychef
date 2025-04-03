@@ -100,6 +100,7 @@ export async function createRecipe(formData: FormData) {
             unit: ingredientUnits[index],
           })),
         },
+
         categories: {
           connect: categoryIds.map((id) => ({ id })),
         },

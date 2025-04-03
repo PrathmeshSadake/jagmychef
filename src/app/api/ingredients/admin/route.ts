@@ -4,15 +4,15 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const isCreated = searchParams.get("isCreated");
+    // const isCreated = searchParams.get("isCreated");
     const search = searchParams.get("search");
 
     let whereClause: any = {};
 
     // Filter for isCreated ingredients
-    if (isCreated === "true") {
-      whereClause.isCreated = true;
-    }
+    // if (isCreated === "true") {
+    //   whereClause.isCreated = true;
+    // }
 
     // Search for ingredients by name
     if (search) {
@@ -32,7 +32,7 @@ export async function GET(request: Request) {
         },
       },
       orderBy: {
-        name: "asc",
+        name: "desc",
       },
     });
 

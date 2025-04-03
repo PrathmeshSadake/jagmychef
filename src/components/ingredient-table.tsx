@@ -72,7 +72,6 @@ export function IngredientTable({
           },
           body: JSON.stringify({
             name: currentIngredient.name,
-            quantity: currentIngredient.quantity,
             unit: currentIngredient.unit,
           }),
         }
@@ -136,7 +135,6 @@ export function IngredientTable({
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Default Quantity</TableHead>
                 <TableHead>Unit</TableHead>
                 <TableHead className='w-[100px]'>Actions</TableHead>
               </TableRow>
@@ -156,7 +154,6 @@ export function IngredientTable({
                     <TableCell className='font-medium'>
                       {ingredient.name}
                     </TableCell>
-                    <TableCell>{ingredient.quantity}</TableCell>
                     <TableCell>{ingredient.unit}</TableCell>
                     <TableCell>
                       <Button onClick={() => handleEditClick(ingredient)}>
@@ -193,17 +190,7 @@ export function IngredientTable({
                 className='col-span-3'
               />
             </div>
-            <div className='grid grid-cols-4 items-center gap-4'>
-              <Label htmlFor='quantity' className='text-right'>
-                Quantity
-              </Label>
-              <Input
-                id='quantity'
-                value={currentIngredient?.quantity || ""}
-                onChange={(e) => handleInputChange("quantity", e.target.value)}
-                className='col-span-3'
-              />
-            </div>
+
             <div className='grid grid-cols-4 items-center gap-4'>
               <Label htmlFor='unit' className='text-right'>
                 Unit

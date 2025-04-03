@@ -48,7 +48,7 @@ model Category {
 model Ingredient {
   id         String   @id @default(cuid())
   name       String
-  quantity   String
+  quantity   String  @default("1")
   unit       String
   recipeId   String?
   isCreated  Boolean @default(false)

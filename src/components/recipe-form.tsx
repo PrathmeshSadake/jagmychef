@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Plus,
@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
 import { Alert, AlertTitle } from "@/components/ui/alert";
+import { Switch } from "./ui/switch";
 
 // Define proper types
 interface Ingredient {
@@ -138,7 +139,146 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
   // Image editing states
   const [brightness, setBrightness] = useState<number>(100);
   const [rotation, setRotation] = useState<number>(0);
+  const [imageSize, setImageSize] = useState(100);
+
   const [showImageTools, setShowImageTools] = useState<boolean>(false);
+
+  // Refs
+  const imageRef = useRef(null);
+
+  // State for crop
+  const [cropMode, setCropMode] = useState(false);
+  const [cropActive, setCropActive] = useState(false);
+  const [cropStartX, setCropStartX] = useState(0);
+  const [cropStartY, setCropStartY] = useState(0);
+  const [cropWidth, setCropWidth] = useState(0);
+  const [cropHeight, setCropHeight] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+
+  // Functions for crop
+  const startCrop = (e: any) => {
+    if (isResizing) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    setCropStartX(x);
+    setCropStartY(y);
+    setCropWidth(0);
+    setCropHeight(0);
+    setCropActive(true);
+    setIsDragging(true);
+  };
+
+  const updateCrop = (e: any) => {
+    if (!isDragging && !isResizing) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    if (isDragging) {
+      // Update crop area while dragging
+      setCropWidth(x - cropStartX);
+      setCropHeight(y - cropStartY);
+    } else if (isResizing) {
+      // Update crop size while resizing
+      setCropWidth(Math.max(10, x - cropStartX));
+      setCropHeight(Math.max(10, y - cropStartY));
+    }
+  };
+
+  const endCrop = () => {
+    setIsDragging(false);
+    setIsResizing(false);
+
+    // Make sure we have positive width and height
+    if (cropWidth < 0) {
+      setCropStartX(cropStartX + cropWidth);
+      setCropWidth(Math.abs(cropWidth));
+    }
+
+    if (cropHeight < 0) {
+      setCropStartY(cropStartY + cropHeight);
+      setCropHeight(Math.abs(cropHeight));
+    }
+  };
+
+  const startResizeCrop = (e: any) => {
+    e.stopPropagation();
+    setIsResizing(true);
+  };
+
+  const applyCrop = () => {
+    // Create a canvas element
+    const canvas = document.createElement("canvas");
+    const ctx: any = canvas.getContext("2d");
+
+    // Adjust crop coordinates for image size
+    const sizeRatio = imageSize / 100;
+    const actualWidth = cropWidth / sizeRatio;
+    const actualHeight = cropHeight / sizeRatio;
+    const actualX = cropStartX / sizeRatio;
+    const actualY = cropStartY / sizeRatio;
+
+    // Create a new image to get original dimensions
+    const img = new Image();
+    img.src = imagePreview;
+
+    img.onload = () => {
+      // Set canvas dimensions to the crop size
+      canvas.width = actualWidth;
+      canvas.height = actualHeight;
+
+      // Apply rotation if needed
+      if (rotation !== 0) {
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate((rotation * Math.PI) / 180);
+        ctx.translate(-canvas.width / 2, -canvas.height / 2);
+      }
+
+      // Draw the cropped portion of the image to the canvas
+      ctx.drawImage(
+        img,
+        actualX,
+        actualY,
+        actualWidth,
+        actualHeight,
+        0,
+        0,
+        actualWidth,
+        actualHeight
+      );
+
+      // Convert canvas to blob and update the image
+      canvas.toBlob(
+        (blob) => {
+          // Create a new file from the blob
+          const newFile = new File([blob!], "cropped-image.jpeg", {
+            type: "image/jpeg",
+          });
+
+          // Create a new object URL for preview
+          const newImagePreview = URL.createObjectURL(blob!);
+
+          // Update state
+          setImagePreview(newImagePreview);
+          setImageFile(newFile);
+
+          // Reset crop-related state
+          setCropMode(false);
+          setCropActive(false);
+          setBrightness(100);
+          setRotation(0);
+          setImageSize(100);
+        },
+        "image/jpeg",
+        0.95
+      );
+    };
+  };
 
   // Fetch categories from API
   const fetchCategories = async () => {
@@ -624,15 +764,47 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
               <div className='border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center relative'>
                 {imagePreview ? (
                   <div className='mb-4 w-full max-w-md'>
-                    <img
-                      src={imagePreview}
-                      alt='Recipe preview'
-                      className='w-full rounded-md'
-                      style={{
-                        filter: `brightness(${brightness}%)`,
-                        transform: `rotate(${rotation}deg)`,
-                      }}
-                    />
+                    <div className='relative'>
+                      <img
+                        src={imagePreview}
+                        alt='Recipe preview'
+                        className='w-full rounded-md'
+                        style={{
+                          filter: `brightness(${brightness}%)`,
+                          transform: `rotate(${rotation}deg)`,
+                          width: `${imageSize}%`,
+                        }}
+                        ref={imageRef}
+                      />
+
+                      {cropMode && (
+                        <div
+                          className='absolute inset-0 cursor-crosshair'
+                          onMouseDown={startCrop}
+                          onMouseMove={updateCrop}
+                          onMouseUp={endCrop}
+                          onMouseLeave={endCrop}
+                        >
+                          {cropActive && (
+                            <div
+                              className='absolute border-2 border-primary rounded-sm bg-primary/10'
+                              style={{
+                                left: `${cropStartX}px`,
+                                top: `${cropStartY}px`,
+                                width: `${cropWidth}px`,
+                                height: `${cropHeight}px`,
+                              }}
+                            >
+                              {/* Resize handles */}
+                              <div
+                                className='absolute right-0 bottom-0 w-4 h-4 bg-primary rounded-sm cursor-se-resize'
+                                onMouseDown={startResizeCrop}
+                              ></div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
 
                     {/* Image editing tools */}
                     {showImageTools && (
@@ -675,6 +847,85 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                           </div>
                         </div>
 
+                        <div>
+                          <Label htmlFor='size'>Resize</Label>
+                          <div className='flex items-center gap-2'>
+                            <span className='text-sm'>50%</span>
+                            <Slider
+                              id='size'
+                              min={50}
+                              max={150}
+                              step={5}
+                              value={[imageSize]}
+                              onValueChange={(values) =>
+                                setImageSize(values[0])
+                              }
+                              disabled={isSubmitting}
+                              className='flex-1'
+                            />
+                            <span className='text-sm'>150%</span>
+                          </div>
+                        </div>
+
+                        <div className='space-y-2'>
+                          <div className='flex justify-between items-center'>
+                            <Label htmlFor='crop'>Crop Mode</Label>
+                            <Switch
+                              id='crop'
+                              checked={cropMode}
+                              onCheckedChange={(checked) => {
+                                setCropMode(checked);
+                                if (!checked) {
+                                  setCropActive(false);
+                                }
+                              }}
+                              disabled={isSubmitting}
+                            />
+                          </div>
+
+                          {cropMode && (
+                            <div className='space-y-3'>
+                              <p className='text-sm text-muted-foreground'>
+                                Drag on the image to create a crop area
+                              </p>
+
+                              {cropActive && (
+                                <div className='flex justify-between items-center'>
+                                  <div className='text-sm'>
+                                    <span className='text-muted-foreground'>
+                                      Size:{" "}
+                                    </span>
+                                    {Math.round(cropWidth)} ×{" "}
+                                    {Math.round(cropHeight)}
+                                  </div>
+
+                                  <div className='flex gap-2'>
+                                    <Button
+                                      type='button'
+                                      variant='outline'
+                                      size='sm'
+                                      onClick={() => setCropActive(false)}
+                                      disabled={isSubmitting}
+                                    >
+                                      Reset
+                                    </Button>
+
+                                    <Button
+                                      type='button'
+                                      variant='secondary'
+                                      size='sm'
+                                      onClick={applyCrop}
+                                      disabled={isSubmitting}
+                                    >
+                                      Apply Crop
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
                         <div className='flex justify-between'>
                           <Button
                             type='button'
@@ -683,10 +934,13 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                             onClick={() => {
                               setBrightness(100);
                               setRotation(0);
+                              setImageSize(100);
+                              setCropMode(false);
+                              setCropActive(false);
                             }}
                             disabled={isSubmitting}
                           >
-                            Reset
+                            Reset All
                           </Button>
                           <Button
                             type='button'
@@ -721,6 +975,11 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                           setImagePreview("");
                           setImageFile(null);
                           setShowImageTools(false);
+                          setBrightness(100);
+                          setRotation(0);
+                          setImageSize(100);
+                          setCropMode(false);
+                          setCropActive(false);
                         }}
                         disabled={isSubmitting}
                       >
