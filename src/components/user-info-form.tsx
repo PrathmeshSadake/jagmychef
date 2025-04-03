@@ -118,7 +118,7 @@ export function UserDetailsDialog() {
           </div>
           <div className='grid grid-cols-4 items-center gap-4'>
             <Label htmlFor='date' className='text-right'>
-              Date
+              Appointment
             </Label>
             <div className='col-span-3'>
               <Button

@@ -56,7 +56,7 @@ export async function POST(request: Request) {
       allInstructions.length > 0
         ? allInstructions
             .map(
-              (instruction, index) => `<li>${index + 1}. ${instruction}</li>`
+              (instruction, index) => `<li>${instruction}</li>`
             )
             .join("")
         : "<li>No preparation instructions available</li>";

@@ -316,7 +316,7 @@ export function ShoppingListActions({
         doc.setFont("helvetica", "bold");
         doc.setTextColor(66, 135, 245);
         doc.text(
-          "Prep Instructions for Your Appointment",
+          "Prep Instructions for Your Appointment:",
           marginLeft,
           currentY
         );

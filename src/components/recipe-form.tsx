@@ -776,34 +776,6 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                         }}
                         ref={imageRef}
                       />
-
-                      {cropMode && (
-                        <div
-                          className='absolute inset-0 cursor-crosshair'
-                          onMouseDown={startCrop}
-                          onMouseMove={updateCrop}
-                          onMouseUp={endCrop}
-                          onMouseLeave={endCrop}
-                        >
-                          {cropActive && (
-                            <div
-                              className='absolute border-2 border-primary rounded-sm bg-primary/10'
-                              style={{
-                                left: `${cropStartX}px`,
-                                top: `${cropStartY}px`,
-                                width: `${cropWidth}px`,
-                                height: `${cropHeight}px`,
-                              }}
-                            >
-                              {/* Resize handles */}
-                              <div
-                                className='absolute right-0 bottom-0 w-4 h-4 bg-primary rounded-sm cursor-se-resize'
-                                onMouseDown={startResizeCrop}
-                              ></div>
-                            </div>
-                          )}
-                        </div>
-                      )}
                     </div>
 
                     {/* Image editing tools */}
@@ -865,65 +837,6 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
                             />
                             <span className='text-sm'>150%</span>
                           </div>
-                        </div>
-
-                        <div className='space-y-2'>
-                          <div className='flex justify-between items-center'>
-                            <Label htmlFor='crop'>Crop Mode</Label>
-                            <Switch
-                              id='crop'
-                              checked={cropMode}
-                              onCheckedChange={(checked) => {
-                                setCropMode(checked);
-                                if (!checked) {
-                                  setCropActive(false);
-                                }
-                              }}
-                              disabled={isSubmitting}
-                            />
-                          </div>
-
-                          {cropMode && (
-                            <div className='space-y-3'>
-                              <p className='text-sm text-muted-foreground'>
-                                Drag on the image to create a crop area
-                              </p>
-
-                              {cropActive && (
-                                <div className='flex justify-between items-center'>
-                                  <div className='text-sm'>
-                                    <span className='text-muted-foreground'>
-                                      Size:{" "}
-                                    </span>
-                                    {Math.round(cropWidth)} ×{" "}
-                                    {Math.round(cropHeight)}
-                                  </div>
-
-                                  <div className='flex gap-2'>
-                                    <Button
-                                      type='button'
-                                      variant='outline'
-                                      size='sm'
-                                      onClick={() => setCropActive(false)}
-                                      disabled={isSubmitting}
-                                    >
-                                      Reset
-                                    </Button>
-
-                                    <Button
-                                      type='button'
-                                      variant='secondary'
-                                      size='sm'
-                                      onClick={applyCrop}
-                                      disabled={isSubmitting}
-                                    >
-                                      Apply Crop
-                                    </Button>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
                         </div>
 
                         <div className='flex justify-between'>

@@ -305,9 +305,6 @@ export function ShoppingListClient() {
               <Card>
                 <CardHeader>
                   <CardTitle>Organized Shopping List</CardTitle>
-                  <CardDescription>
-                    AI-generated list for easier shopping
-                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {generatedList.categories.map(
@@ -340,7 +337,7 @@ export function ShoppingListClient() {
             {generatedInstructions.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Recipe Instructions</CardTitle>
+                  <CardTitle>Prep Instructions for Your Appointment:</CardTitle>
                   <CardDescription>
                     Steps to prepare before your appointment
                   </CardDescription>
