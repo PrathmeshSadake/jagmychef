@@ -12,17 +12,17 @@ const UsersLayout = async ({ children }: { children: React.ReactNode }) => {
   });
   return (
     <div className='h-auto w-full max-w-md mx-auto'>
-      <div className='h-24 px-3 flex justify-between items-center'>
+      <div className='h-32 px-3 flex justify-between items-center'>
         <img
           src='https://1p7ctab0bz.ufs.sh/f/LSctCnwEvjMcbjULPdTkFKWqywc8i6h2PtmJBgXDVeLSMrla'
-          className='w-auto h-24 object-contain'
+          className='w-auto h-32 object-contain'
         />
 
         <Link href={"/shopping-list"}>
           <ShoppingBag />
         </Link>
       </div>
-      <div className='my-2'>
+      <div className='my-1'>
         <SearchBar recipeCount={count} />
       </div>
       {children}
