@@ -135,7 +135,7 @@ export default function SearchBar({ recipeCount }: { recipeCount: any }) {
             buttonVariants({
               variant: "default",
             }),
-            "max-w-fit"
+            "max-w-fit bg-[#1E593D]"
           )}
         >
           {`View all Recipes (${recipeCount || 0})`}

@@ -73,8 +73,8 @@ export async function POST(request: Request) {
             }
             
             .header {
-              background-color: #000;
-              padding: 30px;
+              background-color: #fff;
+              padding: 5px;
               text-align: center;
             }
             
