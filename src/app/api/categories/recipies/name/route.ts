@@ -23,6 +23,9 @@ export async function GET(request: Request) {
       where: { name: decodedName },
       include: {
         recipes: {
+          where: {
+            status: "published",
+          },
           include: {
             categories: true,
           },

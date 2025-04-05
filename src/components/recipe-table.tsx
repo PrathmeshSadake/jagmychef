@@ -2,7 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Edit, Trash2, EyeIcon, Loader2, Search, Copy, EyeOff, Eye } from "lucide-react";
+import {
+  Edit,
+  Trash2,
+  EyeIcon,
+  Loader2,
+  Search,
+  Copy,
+  EyeOff,
+  Eye,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Recipe } from "@prisma/client";
 
@@ -86,15 +95,18 @@ export function RecipeTable({ recipes }: RecipeTableProps) {
   // Function to toggle recipe status (publish/unpublish)
   const toggleRecipeStatus = async (id: string) => {
     // Add recipe to processing state to show loading indicator
-    setProcessingStatusIds(prev => [...prev, id]);
-    
+    setProcessingStatusIds((prev) => [...prev, id]);
+
     try {
-      const response = await fetch(`/api/recipes/${id}/toggle-status`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        `/api/recipes/${id}/toggle-status?id=${id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (response.ok) {
         // Refresh the page to show updated data
@@ -106,7 +118,9 @@ export function RecipeTable({ recipes }: RecipeTableProps) {
       console.error("Error toggling recipe status:", error);
     } finally {
       // Remove recipe from processing state
-      setProcessingStatusIds(prev => prev.filter(recipeId => recipeId !== id));
+      setProcessingStatusIds((prev) =>
+        prev.filter((recipeId) => recipeId !== id)
+      );
     }
   };
 

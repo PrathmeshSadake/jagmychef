@@ -83,19 +83,21 @@ export function AdminSidebar() {
           href='/admin'
           className='flex items-center gap-2 hover:opacity-80 transition-opacity'
         >
-          <ChefHat className='h-7 w-7 text-primary' />
           {!collapsed && (
-            <span className='font-bold text-xl tracking-tight'>Gro Genie</span>
+            <img
+              src='https://1p7ctab0bz.ufs.sh/f/LSctCnwEvjMcbjULPdTkFKWqywc8i6h2PtmJBgXDVeLSMrla'
+              className='w-auto h-16 object-contain'
+            />
           )}
         </Link>
-        <button
+        {/* <button
           onClick={() => setCollapsed(!collapsed)}
           className='absolute right-2 top-4 p-1 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors'
         >
           <ChevronRight
             className={`h-5 w-5 transform transition-transform ${collapsed ? "rotate-180" : ""}`}
           />
-        </button>
+        </button> */}
       </SidebarHeader>
 
       <SidebarContent className='py-4'>

@@ -18,6 +18,8 @@ export async function POST(request: Request) {
       name,
       recipeNames,
       shoppingListItems,
+      instructionsHtml,
+      notesHtml,
       selectedRecipeIds,
       subject,
     } = await request.json();
@@ -29,59 +31,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Fetch all instructions from selected recipes
-    let allInstructions: string[] = [];
-    if (selectedRecipeIds && selectedRecipeIds.length > 0) {
-      const selectedRecipes = await prisma.recipe.findMany({
-        where: {
-          id: {
-            in: selectedRecipeIds,
-          },
-        },
-        select: {
-          instructions: true,
-        },
-      });
-
-      // Combine all instructions from all recipes
-      selectedRecipes.forEach((recipe) => {
-        if (recipe.instructions && recipe.instructions.length > 0) {
-          allInstructions = [...allInstructions, ...recipe.instructions];
-        }
-      });
-    }
-
-    // Fetch general notes
-    const generalNotes = await prisma.note.findMany({
-      orderBy: {
-        order: "asc",
-      },
-    });
-
     // Create recipe list HTML
     const recipeListHTML =
       recipeNames && recipeNames.length > 0
         ? recipeNames.map((name: string) => `<li>${name}</li>`).join("")
         : "<li>No recipes selected</li>";
-
-    // Create numbered instructions HTML
-    const instructionsHTML =
-      allInstructions.length > 0
-        ? allInstructions
-            .map((instruction, index) => `<li>${instruction}</li>`)
-            .join("")
-        : "<li>No preparation instructions available</li>";
-
-    // Create general notes HTML
-    const generalNotesHTML =
-      generalNotes.length > 0
-        ? `
-          <h2>General Notes</h2>
-          <div class="general-notes">
-            ${generalNotes.map((note: Note) => `<p>${note.content}</p>`).join("")}
-          </div>
-        `
-        : "";
 
     // Email HTML template with improved design and logo
     const htmlContent = `
@@ -227,7 +181,7 @@ export async function POST(request: Request) {
         <body>
           <div class="container">
             <div class="header">
-              <img src="https://1p7ctab0bz.ufs.sh/f/LSctCnwEvjMcbzQNr1TkFKWqywc8i6h2PtmJBgXDVeLSMrla" alt="GroGenie Logo" class="logo">
+              <img src="https://1p7ctab0bz.ufs.sh/f/LSctCnwEvjMcbjULPdTkFKWqywc8i6h2PtmJBgXDVeLSMrla" alt="GroGenie Logo" class="logo">
             </div>
             
             <div class="content">
@@ -253,12 +207,17 @@ export async function POST(request: Request) {
               
               <h2>Prep Instructions for Your Appointment</h2>
               <div class="prep-instructions">
-                <ol>
-                  ${instructionsHTML}
-                </ol>
+                ${instructionsHtml || "<p>No preparation instructions available</p>"}
               </div>
               
-              ${generalNotesHTML}
+              ${
+                notesHtml
+                  ? `<h2>General Notes</h2>
+              <div class="general-notes">
+                ${notesHtml}
+              </div>`
+                  : ""
+              }
               
               <p>If you have any questions or need further assistance, please contact us via the JagMyChef app, as responses to this email are unmonitored.</p>
             </div>

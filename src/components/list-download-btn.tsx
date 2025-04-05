@@ -100,6 +100,39 @@ export function ListDownloadButton({ list }: ListDownloadButtonProps) {
       // ===== FIRST PAGE - CUSTOMER COPY =====
       let currentY = 20;
 
+      // Add logo at the top of the first page
+      try {
+        const logoUrl =
+          "https://1p7ctab0bz.ufs.sh/f/LSctCnwEvjMcbjULPdTkFKWqywc8i6h2PtmJBgXDVeLSMrla";
+        const logoData = await fetch(logoUrl)
+          .then((response) => response.blob())
+          .then((blob) => {
+            return new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result);
+              reader.readAsDataURL(blob);
+            });
+          });
+
+        if (logoData) {
+          const logoWidth = 100;
+          const logoHeight = 40;
+          const logoX = (doc.internal.pageSize.getWidth() - logoWidth) / 2;
+          doc.addImage(
+            logoData as string,
+            "PNG",
+            logoX,
+            currentY,
+            logoWidth,
+            logoHeight
+          );
+          currentY += logoHeight + 10; // Add space after the logo
+        }
+      } catch (error) {
+        console.error("Error adding logo:", error);
+        // Continue even if logo loading fails
+      }
+
       // Add header
       doc.setFontSize(16);
       doc.setFont("helvetica", "bold");

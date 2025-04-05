@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Download, FileText, Loader, Printer, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -9,6 +9,7 @@ import { selectedRecipeIdsAtom, userDetailsAtom } from "@/lib/atoms";
 import { useAtom } from "jotai";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import Image from "next/image";
 
 interface ShoppingItem {
   name: string;
@@ -56,7 +57,29 @@ export function ShoppingListActions({
   const [_, setSelectedRecipeIds] = useAtom(selectedRecipeIdsAtom);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [logoBase64, setLogoBase64] = useState<string | null>(null);
   const router = useRouter();
+
+  // Fetch logo and convert to base64 for PDF
+  useEffect(() => {
+    const fetchLogo = async () => {
+      try {
+        const response = await fetch(
+          "https://1p7ctab0bz.ufs.sh/f/LSctCnwEvjMcbjULPdTkFKWqywc8i6h2PtmJBgXDVeLSMrla"
+        );
+        const blob = await response.blob();
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64data = reader.result as string;
+          setLogoBase64(base64data);
+        };
+        reader.readAsDataURL(blob);
+      } catch (error) {
+        console.error("Error fetching logo:", error);
+      }
+    };
+    fetchLogo();
+  }, []);
 
   // Convert shopping list to a simple text format for the AI
   const formatShoppingListForAI = () => {
@@ -108,29 +131,96 @@ export function ShoppingListActions({
   };
 
   // Create email content with shopping list details
-  const createEmailContent = () => {
+  const createEmailContent = async () => {
+    // Use the same organized list that's used for the PDF
+    const organizedList = await getOrganizedList();
+    if (!organizedList) {
+      throw new Error("Failed to generate organized list");
+    }
+
     // Get recipe names for the email
     const recipeNames = selectedRecipes.map((recipe) => recipe.name);
 
-    // Format shopping list items for email
+    // Format shopping list items for email with checkboxes
     let shoppingListItems = "";
-    Object.entries(shoppingList).forEach(([category, items]) => {
-      shoppingListItems += `<h3>${category}</h3><ul>`;
 
-      items.forEach((item, index) => {
-        const isChecked = isItemChecked(category, index);
-        shoppingListItems += `<li${isChecked ? ' style="text-decoration: line-through;"' : ""}>`;
-        shoppingListItems += `${item.name}: ${item.quantity} ${item.unit}`;
-        shoppingListItems += `${isChecked ? " (already have)" : ""}`;
-        shoppingListItems += `</li>`;
+    if (organizedList && organizedList.categories) {
+      organizedList.categories.forEach((category: any) => {
+        shoppingListItems += `<h3 style="color: #4287f5;">${category.name}</h3>`;
+        shoppingListItems += `<div style="margin-bottom: 15px;">`;
+
+        category.items.forEach((item: any) => {
+          // Find if this item is checked in any category
+          let isChecked = false;
+          Object.entries(shoppingList).forEach(([listCategory, items]) => {
+            items.forEach((listItem, index) => {
+              if (
+                listItem.name.toLowerCase() === item.name.toLowerCase() &&
+                isItemChecked(listCategory, index)
+              ) {
+                isChecked = true;
+              }
+            });
+          });
+
+          // Add checkbox style for email
+          if (isChecked) {
+            shoppingListItems += `<div style="display: flex; margin-bottom: 5px;">
+              <div style="width: 16px; height: 16px; border: 1px solid #000; display: inline-block; margin-right: 8px; position: relative;">
+                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; text-align: center; line-height: 16px;">✓</div>
+              </div>
+              <span style="text-decoration: line-through;">${item.name}: ${item.quantity} ${item.unit || ""}</span>
+            </div>`;
+          } else {
+            shoppingListItems += `<div style="display: flex; margin-bottom: 5px;">
+              <div style="width: 16px; height: 16px; border: 1px solid #000; display: inline-block; margin-right: 8px;"></div>
+              <span>${item.name}: ${item.quantity} ${item.unit || ""}</span>
+            </div>`;
+          }
+        });
+
+        shoppingListItems += `</div>`;
       });
+    }
 
-      shoppingListItems += `</ul>`;
-    });
+    // Add recipe instructions
+    let instructionsHtml = "";
+    if (selectedRecipes.length > 0) {
+      instructionsHtml += `<h3 style="color: #4287f5; margin-top: 20px;">Prep Instructions for Your Appointment:</h3>`;
+      let step = 1;
+
+      selectedRecipes.forEach((recipe) => {
+        if (recipe.instructions && recipe.instructions.length > 0) {
+          recipe.instructions.forEach((instruction) => {
+            instructionsHtml += `<p>${step}. ${instruction}</p>`;
+            step++;
+          });
+        }
+      });
+    }
+
+    // Add general notes
+    let notesHtml = "";
+    try {
+      const notesResponse = await fetch("/api/notes/all");
+      if (notesResponse.ok) {
+        const generalNotes = await notesResponse.json();
+        if (generalNotes.length > 0) {
+          notesHtml += `<h3 style="color: #4287f5; margin-top: 20px;">General Notes:</h3>`;
+          generalNotes.forEach((note: Note) => {
+            notesHtml += `<p>${note.content}</p>`;
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching notes:", error);
+    }
 
     return {
       recipeNames,
       shoppingListItems,
+      instructionsHtml,
+      notesHtml,
     };
   };
 
@@ -142,7 +232,8 @@ export function ShoppingListActions({
         return false;
       }
 
-      const { recipeNames, shoppingListItems } = createEmailContent();
+      const { recipeNames, shoppingListItems, instructionsHtml, notesHtml } =
+        await createEmailContent();
 
       const response = await fetch("/api/send-email", {
         method: "POST",
@@ -154,6 +245,8 @@ export function ShoppingListActions({
           name: userDetails.name,
           recipeNames: recipeNames,
           shoppingListItems: shoppingListItems,
+          instructionsHtml: instructionsHtml,
+          notesHtml: notesHtml,
           selectedRecipeIds: selectedRecipeIds,
           subject: "Your Customized Grocery List is Ready!",
         }),
@@ -171,7 +264,7 @@ export function ShoppingListActions({
     }
   };
 
-  // Modified handlePdfDownload function with checkbox support
+  // Modified handlePdfDownload function with checkbox support and logo
   const handlePdfDownload = async () => {
     try {
       // Get organized list from OpenAI
@@ -200,6 +293,16 @@ export function ShoppingListActions({
       // Set initial positions
       const marginLeft = 20;
       let currentY = 20;
+
+      // Add logo if available
+      if (logoBase64) {
+        try {
+          doc.addImage(logoBase64, "PNG", marginLeft, currentY, 40, 40);
+          currentY += 45; // Add space after logo
+        } catch (e) {
+          console.error("Error adding logo to PDF:", e);
+        }
+      }
 
       // Add title
       doc.setFontSize(20);
@@ -376,37 +479,37 @@ export function ShoppingListActions({
       }
 
       // General Notes section
-      if (generalNotes.length > 0) {
-        // Add a page break if needed
-        if (currentY > 250) {
-          doc.addPage();
-          currentY = 20;
-        }
+      // if (generalNotes.length > 0) {
+      //   // Add a page break if needed
+      //   if (currentY > 250) {
+      //     doc.addPage();
+      //     currentY = 20;
+      //   }
 
-        doc.setFontSize(16);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(66, 135, 245);
-        doc.text("General Notes:", marginLeft, currentY);
-        currentY += 10;
+      //   doc.setFontSize(16);
+      //   doc.setFont("helvetica", "bold");
+      //   doc.setTextColor(66, 135, 245);
+      //   doc.text("General Notes:", marginLeft, currentY);
+      //   currentY += 10;
 
-        // Reset text color for notes
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "normal");
+      //   // Reset text color for notes
+      //   doc.setTextColor(0, 0, 0);
+      //   doc.setFontSize(12);
+      //   doc.setFont("helvetica", "normal");
 
-        generalNotes.forEach((note: Note) => {
-          // Check if we need a new page
-          if (currentY > 250) {
-            doc.addPage();
-            currentY = 20;
-          }
+      //   generalNotes.forEach((note: Note) => {
+      //     // Check if we need a new page
+      //     if (currentY > 250) {
+      //       doc.addPage();
+      //       currentY = 20;
+      //     }
 
-          // Wrap long note content
-          const splitText = doc.splitTextToSize(note.content, 170);
-          doc.text(splitText, marginLeft, currentY);
-          currentY += 6 * splitText.length + 4; // Add extra space between notes
-        });
-      }
+      //     // Wrap long note content
+      //     const splitText = doc.splitTextToSize(note.content, 170);
+      //     doc.text(splitText, marginLeft, currentY);
+      //     currentY += 6 * splitText.length + 4; // Add extra space between notes
+      //   });
+      // }
 
       // Save the PDF
       doc.save("shopping-list.pdf");
@@ -422,6 +525,13 @@ export function ShoppingListActions({
       setIsLoading(true);
       if (!userDetails) {
         toast.error("User details are required");
+        return;
+      }
+
+      // First get organized list to ensure consistency between PDF and email
+      const organizedList = await getOrganizedList();
+      if (!organizedList) {
+        toast.error("Couldn't generate the organized list");
         return;
       }
 

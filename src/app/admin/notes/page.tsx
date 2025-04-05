@@ -85,7 +85,7 @@ export default function NotesAdmin() {
 
     try {
       setSubmitting(true);
-      const response = await fetch(`/api/notes/${id}`, {
+      const response = await fetch(`/api/notes/${id}?id=${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: editContent }),
@@ -105,7 +105,7 @@ export default function NotesAdmin() {
 
   const handleDeleteNote = async (id: string) => {
     try {
-      const response = await fetch(`/api/notes/${id}`, {
+      const response = await fetch(`/api/notes/${id}?id=${id}`, {
         method: "DELETE",
       });
 

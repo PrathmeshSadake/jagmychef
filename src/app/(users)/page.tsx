@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { ShoppingBag } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { userDetailsAtom } from "@/lib/atoms";
 import { useAtom } from "jotai";
@@ -12,6 +13,7 @@ import { useUserFormDialog } from "@/hooks/user-user-form-hook";
 interface Category {
   id: string;
   name: string;
+  image: string;
 }
 
 export default function CategoriesPage() {
@@ -41,12 +43,22 @@ export default function CategoriesPage() {
       {categories.map((category) => (
         <Card
           key={category.id}
-          className='cursor-pointer hover:shadow-lg transition'
+          className='cursor-pointer hover:shadow-lg transition relative overflow-hidden h-48'
           onClick={() => router.push(`/categories/${category.name}`)}
         >
-          <CardContent className='p-6 text-center'>
-            <CardTitle>{category.name}</CardTitle>
-          </CardContent>
+          <div className='absolute inset-0'>
+            <Image
+              src={category.image}
+              alt={category.name}
+              fill
+              style={{ objectFit: "cover" }}
+            />
+            <div className='absolute inset-0 bg-black/50 flex items-center justify-center'>
+              <CardTitle className='text-white text-xl md:text-2xl font-bold'>
+                {category.name}
+              </CardTitle>
+            </div>
+          </div>
         </Card>
       ))}
     </div>

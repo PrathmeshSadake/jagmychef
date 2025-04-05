@@ -1,15 +1,17 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
-// GET - Fetch a single note
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return new NextResponse(null, { status: 500 });
+    }
     const note = await prisma.note.findUnique({
       where: {
-        id: params.id,
+        id: id,
       },
     });
 
@@ -19,7 +21,7 @@ export async function GET(
 
     return NextResponse.json(note);
   } catch (error) {
-    console.error(`Error fetching note ${params.id}:`, error);
+    console.error(`Error fetching note`, error);
     return NextResponse.json(
       { error: "Failed to fetch note" },
       { status: 500 }
@@ -28,11 +30,14 @@ export async function GET(
 }
 
 // PATCH - Update a note
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return new NextResponse(null, { status: 500 });
+    }
     const { content, order } = await request.json();
     const updateData: any = {};
 
@@ -41,14 +46,14 @@ export async function PATCH(
 
     const note = await prisma.note.update({
       where: {
-        id: params.id,
+        id: id,
       },
       data: updateData,
     });
 
     return NextResponse.json(note);
   } catch (error) {
-    console.error(`Error updating note ${params.id}:`, error);
+    console.error(`Error updating note`, error);
     return NextResponse.json(
       { error: "Failed to update note" },
       { status: 500 }
@@ -57,14 +62,17 @@ export async function PATCH(
 }
 
 // DELETE - Delete a note
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return new NextResponse(null, { status: 500 });
+    }
     await prisma.note.delete({
       where: {
-        id: params.id,
+        id: id,
       },
     });
 
@@ -87,7 +95,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error(`Error deleting note ${params.id}:`, error);
+    console.error(`Error deleting note`, error);
     return NextResponse.json(
       { error: "Failed to delete note" },
       { status: 500 }
