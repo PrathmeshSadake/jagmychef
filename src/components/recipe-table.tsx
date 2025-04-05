@@ -89,7 +89,7 @@ export function RecipeTable({ recipes }: RecipeTableProps) {
 
   // Function to handle duplicating a recipe
   const handleDuplicate = (id: string) => {
-    router.push(`/admin/recipes/${id}/duplicate`);
+  router.push(`/admin/recipes/${id}/duplicate`);
   };
 
   // Function to toggle recipe status (publish/unpublish)
@@ -105,6 +105,7 @@ export function RecipeTable({ recipes }: RecipeTableProps) {
           headers: {
             "Content-Type": "application/json",
           },
+          body: JSON.stringify({ id }),
         }
       );
 

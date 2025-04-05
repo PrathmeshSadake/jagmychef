@@ -7,7 +7,7 @@ export async function DELETE(request: Request) {
     const id = searchParams.get("id");
 
     if (!id) {
-      return new NextResponse(null, { status: 500 });
+      return new NextResponse("Id is required", { status: 500 });
     }
 
     // Delete the recipe (ingredients will be deleted automatically due to onDelete: Cascade)
