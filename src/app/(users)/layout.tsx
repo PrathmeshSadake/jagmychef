@@ -22,7 +22,7 @@ const UsersLayout = async ({ children }: { children: React.ReactNode }) => {
           <ShoppingBag />
         </Link>
       </div>
-      <div className='my-4'>
+      <div className='my-2'>
         <SearchBar recipeCount={count} />
       </div>
       {children}
