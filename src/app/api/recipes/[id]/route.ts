@@ -1,16 +1,21 @@
 import prisma from "@/lib/db";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function DELETE(request: Request) {
+export async function DELETE(
+  request: NextRequest,
+  {
+    params,
+  }: {
+    params: any;
+  }
+) {
   try {
     // Try to get ID from URL query parameters
-    const { searchParams } = new URL(request.url);
-    const idFromQuery = searchParams.get("id");
+    const id = params.id;
 
     // Also try to get ID from URL path parameters
 
     // Use ID from query params first, then from path
-    const id = idFromQuery;
 
     if (!id) {
       return new NextResponse("Id is required", { status: 500 });
