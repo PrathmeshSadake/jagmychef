@@ -537,9 +537,48 @@ export function RecipeForm({ recipe, isDuplicate = false }: RecipeFormProps) {
     setSubmitError(null);
 
     const formData = new FormData(e.currentTarget);
+    const recipeName = formData.get("name") as string;
+
+    // For non-draft mode, validate that all required fields are provided
+    if (!saveAsDraft) {
+      // Check if name is empty
+      if (!recipeName || recipeName.trim() === "") {
+        setSubmitError("Recipe name is required");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Check if ingredients are valid
+      if (!ingredients.every((ing) => ing.name && ing.quantity && ing.unit)) {
+        setSubmitError("All ingredients must have a name, quantity, and unit");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Check if instructions are valid
+      if (!instructions.every((inst) => inst.trim() !== "")) {
+        setSubmitError("All instructions must have content");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Check if chef instructions are valid
+      if (!chefInstructions.every((inst) => inst.trim() !== "")) {
+        setSubmitError("All chef tips must have content");
+        setIsSubmitting(false);
+        return;
+      }
+    } else {
+      // For draft mode, only require recipe name
+      if (!recipeName || recipeName.trim() === "") {
+        setSubmitError("Recipe name is required even for drafts");
+        setIsSubmitting(false);
+        return;
+      }
+    }
 
     // Set status
-    formData.set("status", saveAsDraft ? "draft" : status);
+    formData.set("status", saveAsDraft ? "draft" : "published");
 
     // Add ingredients to formData
     ingredients.forEach((ingredient) => {
@@ -614,6 +653,11 @@ export function RecipeForm({ recipe, isDuplicate = false }: RecipeFormProps) {
     instructions.every((inst) => inst.trim() !== "") &&
     chefInstructions.every((inst) => inst.trim() !== "");
 
+  // For draft mode, only require minimal information (at least recipe name)
+  const isDraftValid =
+    document.getElementById("name") &&
+    (document.getElementById("name") as HTMLInputElement).value.trim() !== "";
+
   return (
     <form onSubmit={(e) => handleSubmit(e, false)} className='space-y-8'>
       {submitError && (
@@ -632,7 +676,6 @@ export function RecipeForm({ recipe, isDuplicate = false }: RecipeFormProps) {
                 name='name'
                 placeholder='Enter recipe name'
                 defaultValue={recipe?.name || ""}
-                required
                 disabled={isSubmitting}
               />
             </div>
@@ -1275,7 +1318,7 @@ export function RecipeForm({ recipe, isDuplicate = false }: RecipeFormProps) {
               handleSubmit(formEvent, true);
             }
           }}
-          disabled={!isFormValid || isSubmitting}
+          disabled={!isDraftValid || isSubmitting}
         >
           {isSubmitting ? (
             <>
