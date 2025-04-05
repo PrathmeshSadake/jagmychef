@@ -37,6 +37,12 @@ interface ShoppingListActionsProps {
   };
 }
 
+interface Note {
+  id: string;
+  content: string;
+  order: number;
+}
+
 export function ShoppingListActions({
   shoppingList,
   selectedRecipeIds = [],
@@ -173,6 +179,17 @@ export function ShoppingListActions({
       if (!organizedList) {
         toast.error("Couldn't generate the organized list");
         return;
+      }
+
+      // Fetch general notes
+      let generalNotes = [];
+      try {
+        const notesResponse = await fetch("/api/notes/all");
+        if (notesResponse.ok) {
+          generalNotes = await notesResponse.json();
+        }
+      } catch (error) {
+        console.error("Error fetching notes:", error);
       }
 
       // Dynamically import jsPDF to ensure it only loads on client side
@@ -355,6 +372,39 @@ export function ShoppingListActions({
               step = step + 1;
             });
           }
+        });
+      }
+
+      // General Notes section
+      if (generalNotes.length > 0) {
+        // Add a page break if needed
+        if (currentY > 250) {
+          doc.addPage();
+          currentY = 20;
+        }
+
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(66, 135, 245);
+        doc.text("General Notes:", marginLeft, currentY);
+        currentY += 10;
+
+        // Reset text color for notes
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "normal");
+
+        generalNotes.forEach((note: Note) => {
+          // Check if we need a new page
+          if (currentY > 250) {
+            doc.addPage();
+            currentY = 20;
+          }
+
+          // Wrap long note content
+          const splitText = doc.splitTextToSize(note.content, 170);
+          doc.text(splitText, marginLeft, currentY);
+          currentY += 6 * splitText.length + 4; // Add extra space between notes
         });
       }
 

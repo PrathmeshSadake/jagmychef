@@ -61,6 +61,7 @@ export async function createRecipe(formData: FormData) {
     const description = formData.get("description") as string;
     const prepTime = formData.get("prepTime") as string;
     const image = formData.get("image") as string | File;
+    const status = (formData.get("status") as string) || "published";
 
     // Get arrays from form data
     const ingredientNames = formData.getAll("ingredientName") as string[];
@@ -93,6 +94,7 @@ export async function createRecipe(formData: FormData) {
         image: imageUrl,
         instructions,
         chefInstructions,
+        status,
         ingredients: {
           create: ingredientNames.map((name, index) => ({
             name,
@@ -122,6 +124,7 @@ export async function updateRecipe(id: string, formData: FormData) {
     const description = formData.get("description") as string;
     const prepTime = formData.get("prepTime") as string;
     const image = formData.get("image") as string | File;
+    const status = (formData.get("status") as string) || "published";
 
     // Get arrays from form data
     const ingredientNames = formData.getAll("ingredientName") as string[];
@@ -160,6 +163,7 @@ export async function updateRecipe(id: string, formData: FormData) {
         image: imageUrl,
         instructions,
         chefInstructions,
+        status,
         ingredients: {
           create: ingredientNames.map((name, index) => ({
             name,

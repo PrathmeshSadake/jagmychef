@@ -81,13 +81,15 @@ interface Recipe {
   chefInstructions: string[];
   instructions: string[];
   categories?: Category[];
+  status?: string;
 }
 
 interface RecipeFormProps {
   recipe?: Recipe;
+  isDuplicate?: boolean;
 }
 
-export function RecipeForm({ recipe }: RecipeFormProps) {
+export function RecipeForm({ recipe, isDuplicate = false }: RecipeFormProps) {
   const router = useRouter();
   const [ingredients, setIngredients] = useState<Ingredient[]>(
     recipe?.ingredients || [{ name: "", quantity: "", unit: "" }]
@@ -155,6 +157,9 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
   const [cropHeight, setCropHeight] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
+
+  // Add status state
+  const [status, setStatus] = useState<string>(recipe?.status || "published");
 
   // Functions for crop
   const startCrop = (e: any) => {
@@ -518,12 +523,18 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
     setChefInstructions(newChefInstructions);
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>,
+    saveAsDraft = false
+  ) => {
     e.preventDefault();
     setIsSubmitting(true);
     setSubmitError(null);
 
     const formData = new FormData(e.currentTarget);
+
+    // Set status
+    formData.set("status", saveAsDraft ? "draft" : status);
 
     // Add ingredients to formData
     ingredients.forEach((ingredient) => {
@@ -562,14 +573,19 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
     }
 
     try {
+      // If it's a duplicate, always use POST as it's a new recipe
+      const method = isDuplicate ? "POST" : recipe ? "PUT" : "POST";
+      const url = isDuplicate
+        ? "/api/recipes"
+        : recipe
+          ? `/api/recipes?id=${recipe.id}`
+          : "/api/recipes";
+
       // Submit the form data to the server
-      const response = await fetch(
-        recipe ? `/api/recipes?id=${recipe.id}` : "/api/recipes",
-        {
-          method: recipe ? "PUT" : "POST",
-          body: formData,
-        }
-      );
+      const response = await fetch(url, {
+        method,
+        body: formData,
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -594,7 +610,7 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
     chefInstructions.every((inst) => inst.trim() !== "");
 
   return (
-    <form onSubmit={handleSubmit} className='space-y-8'>
+    <form onSubmit={(e) => handleSubmit(e, false)} className='space-y-8'>
       {submitError && (
         <div className='bg-red-50 border border-red-200 text-red-800 p-4 rounded-md'>
           {submitError}
@@ -1240,6 +1256,21 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
         >
           Cancel
         </Button>
+        <Button
+          type='button'
+          variant='secondary'
+          onClick={(e) => handleSubmit(e as any, true)}
+          disabled={!isFormValid || isSubmitting}
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+              Saving...
+            </>
+          ) : (
+            "Save as Draft"
+          )}
+        </Button>
         <Button type='submit' disabled={!isFormValid || isSubmitting}>
           {isSubmitting ? (
             <>
@@ -1247,7 +1278,7 @@ export function RecipeForm({ recipe }: RecipeFormProps) {
               Saving...
             </>
           ) : (
-            "Save Recipe"
+            "Publish Recipe"
           )}
         </Button>
       </div>

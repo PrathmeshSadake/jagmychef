@@ -10,6 +10,14 @@ export interface UserDetails {
 // The first parameter is the key used in localStorage
 export const userDetailsAtom = atomWithStorage<any>("userDetails", null);
 
+export interface Note {
+  id: string;
+  content: string;
+  order: number;
+}
+
+export const adminNotesAtom = atomWithStorage<Note[]>("adminNotes", []);
+
 // Types
 export interface Recipe {
   id: string;
@@ -18,7 +26,9 @@ export interface Recipe {
   prepTime?: string;
   image?: string;
   instructions?: string[];
-  ingredients: Ingredient[];
+  chefInstructions?: string[];
+  ingredients?: Ingredient[];
+  categories?: any[];
 }
 
 export interface Ingredient {

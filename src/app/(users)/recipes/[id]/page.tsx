@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Clock, Plus, Utensils } from "lucide-react";
+import { use } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,8 +9,17 @@ import { Separator } from "@/components/ui/separator";
 import { getRecipeById } from "@/lib/data";
 import { ShoppingListButton } from "@/components/shopping-list-btn";
 
-export default async function RecipeDetailPage({ params }: { params: any }) {
-  const recipe: any = await getRecipeById(params.id);
+interface RecipeParams {
+  id: string;
+}
+
+export default function RecipeDetailPage({
+  params,
+}: {
+  params: Promise<RecipeParams>;
+}) {
+  const unwrappedParams = use(params);
+  const recipe: any = use(getRecipeById(unwrappedParams.id));
 
   if (!recipe) {
     return (

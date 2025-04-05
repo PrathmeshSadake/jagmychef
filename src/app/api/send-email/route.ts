@@ -5,6 +5,12 @@ import prisma from "@/lib/db";
 // Initialize Resend with your API key
 const resend = new Resend(process.env.RESEND_API_KEY!);
 
+interface Note {
+  id: string;
+  content: string;
+  order: number;
+}
+
 export async function POST(request: Request) {
   try {
     const {
@@ -45,6 +51,13 @@ export async function POST(request: Request) {
       });
     }
 
+    // Fetch general notes
+    const generalNotes = await prisma.note.findMany({
+      orderBy: {
+        order: "asc",
+      },
+    });
+
     // Create recipe list HTML
     const recipeListHTML =
       recipeNames && recipeNames.length > 0
@@ -55,11 +68,20 @@ export async function POST(request: Request) {
     const instructionsHTML =
       allInstructions.length > 0
         ? allInstructions
-            .map(
-              (instruction, index) => `<li>${instruction}</li>`
-            )
+            .map((instruction, index) => `<li>${instruction}</li>`)
             .join("")
         : "<li>No preparation instructions available</li>";
+
+    // Create general notes HTML
+    const generalNotesHTML =
+      generalNotes.length > 0
+        ? `
+          <h2>General Notes</h2>
+          <div class="general-notes">
+            ${generalNotes.map((note: Note) => `<p>${note.content}</p>`).join("")}
+          </div>
+        `
+        : "";
 
     // Email HTML template with improved design and logo
     const htmlContent = `
@@ -165,6 +187,13 @@ export async function POST(request: Request) {
               margin-top: 10px;
             }
             
+            .general-notes {
+              background-color: #f5f5ff;
+              border-radius: 8px;
+              padding: 15px 20px; 
+              margin-top: 10px;
+            }
+            
             .footer {
               margin-top: 30px;
               padding: 20px 30px;
@@ -228,6 +257,8 @@ export async function POST(request: Request) {
                   ${instructionsHTML}
                 </ol>
               </div>
+              
+              ${generalNotesHTML}
               
               <p>If you have any questions or need further assistance, please contact us via the JagMyChef app, as responses to this email are unmonitored.</p>
             </div>

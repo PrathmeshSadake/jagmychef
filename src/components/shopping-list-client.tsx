@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { Trash2, Loader } from "lucide-react";
 import { useAtom } from "jotai";
@@ -19,8 +19,10 @@ import {
   selectedRecipeIdsAtom,
   selectedRecipesAtom,
   shoppingListAtom,
+  adminNotesAtom,
 } from "@/lib/atoms";
 import { ShoppingListActions } from "./shopping-list-actions";
+import { GeneralNotes } from "./general-notes";
 
 export function ShoppingListClient() {
   // Use Jotai atoms
@@ -40,6 +42,7 @@ export function ShoppingListClient() {
   const [generatedInstructions, setGeneratedInstructions] = useState<string[]>(
     []
   );
+  const [hasInitiallyFetched, setHasInitiallyFetched] = useState(false);
 
   // Compare recipe arrays to detect changes
   const haveRecipesChanged = useCallback(
@@ -95,6 +98,14 @@ export function ShoppingListClient() {
 
   // Fetch ingredients when selected recipes change
   useEffect(() => {
+    // Skip if we've already fetched and there's no change to recipe IDs
+    if (
+      hasInitiallyFetched &&
+      !haveRecipesChanged(previousRecipeIds, selectedRecipeIds)
+    ) {
+      return;
+    }
+
     const fetchIngredients = async () => {
       if (selectedRecipeIds.length === 0) {
         setShoppingList({});
@@ -139,6 +150,9 @@ export function ShoppingListClient() {
           setGeneratedList(newList);
           setPreviousRecipeIds([...selectedRecipeIds]);
         }
+
+        // Mark as initially fetched
+        setHasInitiallyFetched(true);
       } catch (error) {
         console.error("Error fetching ingredients:", error);
       }
@@ -147,10 +161,11 @@ export function ShoppingListClient() {
     fetchIngredients();
   }, [
     selectedRecipeIds,
-    previousRecipeIds,
-    // generatedList,
-    // generateOrganizedList,
     haveRecipesChanged,
+    generateOrganizedList,
+    hasInitiallyFetched,
+    previousRecipeIds,
+    generatedList,
   ]);
 
   // Remove recipe from selection
@@ -160,17 +175,74 @@ export function ShoppingListClient() {
     );
   };
 
-  // Handle checkbox toggle
-  const handleCheckboxChange = (category: string, index: number) => {
-    setCheckedItems((prev) => {
-      const updatedCategory = [...(prev[category] || [])];
-      updatedCategory[index] = !updatedCategory[index];
-      return {
-        ...prev,
-        [category]: updatedCategory,
-      };
+  // Handle checkbox toggle with memoization to prevent unnecessary re-renders
+  const handleCheckboxChange = useCallback(
+    (category: string, index: number) => {
+      setCheckedItems((prev) => {
+        // Only update if there's an actual change
+        if (prev[category]?.[index] === undefined) {
+          const updatedCategory = [...(prev[category] || [])];
+          updatedCategory[index] = true;
+          return {
+            ...prev,
+            [category]: updatedCategory,
+          };
+        }
+
+        // Create a new array to ensure reference changes for React to detect the update
+        const updatedCategory = [...(prev[category] || [])];
+        updatedCategory[index] = !updatedCategory[index];
+
+        return {
+          ...prev,
+          [category]: updatedCategory,
+        };
+      });
+    },
+    []
+  );
+
+  // Create a memoized map of item names to their category and index
+  // to optimize checkbox lookups without triggering re-renders
+  const createItemLookupMap = useCallback(() => {
+    const lookupMap = new Map();
+
+    Object.entries(shoppingList).forEach(([category, items]) => {
+      items.forEach((item, index) => {
+        // Use lowercase item name as key for case-insensitive comparison
+        const key = item.name.toLowerCase();
+        lookupMap.set(key, { category, index });
+      });
     });
-  };
+
+    return lookupMap;
+  }, [shoppingList]);
+
+  // Memoize the lookup map
+  const itemLookupMap = useMemo(
+    () => createItemLookupMap(),
+    [createItemLookupMap]
+  );
+
+  // Find checkbox status for an item using the lookup map
+  const getItemCheckStatus = useCallback(
+    (itemName: string) => {
+      const key = itemName.toLowerCase();
+      const itemInfo = itemLookupMap.get(key);
+
+      if (itemInfo) {
+        const { category, index } = itemInfo;
+        return {
+          isChecked: checkedItems[category]?.[index] || false,
+          categoryKey: category,
+          originalIndex: index,
+        };
+      }
+
+      return { isChecked: false, categoryKey: "", originalIndex: -1 };
+    },
+    [itemLookupMap, checkedItems]
+  );
 
   return (
     <>
@@ -241,70 +313,14 @@ export function ShoppingListClient() {
           </Card>
         ) : (
           <>
-            {/* <div>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Ingredients</CardTitle>
-                  <CardDescription>
-                    Please check your pantry and fridge for available
-                    ingredients
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {Object.keys(shoppingList).length === 0 ? (
-                    <div className='text-center py-8'>
-                      <p className='text-muted-foreground mb-4'>
-                        No ingredients in your shopping list yet
-                      </p>
-                      <Link href='/recipes'>
-                        <Button>Browse Recipes</Button>
-                      </Link>
-                    </div>
-                  ) : (
-                    Object.entries(shoppingList).map(([category, items]) => (
-                      <div key={category} className='mb-6'>
-                        <h3 className='font-medium text-lg mb-2'>{category}</h3>
-                        <Separator className='mb-3' />
-                        <ul className='space-y-2'>
-                          {items.map((item: any, index: number) => (
-                            <li
-                              key={`${item.name}-${item.recipeId}`}
-                              className='flex items-center justify-between'
-                            >
-                              <div className='flex items-center gap-2'>
-                                <Checkbox
-                                  id={`item-${category}-${index}`}
-                                  checked={
-                                    checkedItems[category]?.[index] || false
-                                  }
-                                  onCheckedChange={() =>
-                                    handleCheckboxChange(category, index)
-                                  }
-                                />
-                                <label
-                                  htmlFor={`item-${category}-${index}`}
-                                  className='text-sm cursor-pointer'
-                                >
-                                  {item.name}
-                                </label>
-                              </div>
-                              <span className='text-sm text-muted-foreground'>
-                                {item.quantity} {item.unit}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))
-                  )}
-                </CardContent>
-              </Card>
-            </div> */}
-
+            {/* Remove Ingredients section and only keep Organized Shopping List with checkboxes */}
             {generatedList && selectedRecipeIds.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle>Organized Shopping List</CardTitle>
+                  <CardDescription>
+                    Check items you already have in your pantry or fridge
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {generatedList.categories.map(
@@ -314,18 +330,46 @@ export function ShoppingListClient() {
                           {category.name}
                         </h3>
                         <Separator className='mb-3' />
-                        <ul className='space-y-1'>
-                          {category.items.map((item: any, itemIndex: any) => (
-                            <li
-                              key={`gen-item-${catIndex}-${itemIndex}`}
-                              className='text-sm flex justify-between'
-                            >
-                              <span>{item.name}</span>
-                              <span className='text-muted-foreground'>
-                                {item.quantity} {item.unit || ""}
-                              </span>
-                            </li>
-                          ))}
+                        <ul className='space-y-2'>
+                          {category.items.map((item: any, itemIdx: any) => {
+                            const { isChecked, categoryKey, originalIndex } =
+                              getItemCheckStatus(item.name);
+
+                            return (
+                              <li
+                                key={`gen-item-${catIndex}-${itemIdx}`}
+                                className='flex items-center justify-between'
+                              >
+                                <div className='flex items-center gap-2'>
+                                  <Checkbox
+                                    id={`item-${category.name}-${itemIdx}`}
+                                    checked={isChecked}
+                                    onCheckedChange={() => {
+                                      if (categoryKey && originalIndex !== -1) {
+                                        handleCheckboxChange(
+                                          categoryKey,
+                                          originalIndex
+                                        );
+                                      }
+                                    }}
+                                  />
+                                  <label
+                                    htmlFor={`item-${category.name}-${itemIdx}`}
+                                    className={`text-sm cursor-pointer ${
+                                      isChecked
+                                        ? "line-through text-muted-foreground"
+                                        : ""
+                                    }`}
+                                  >
+                                    {item.name}
+                                  </label>
+                                </div>
+                                <span className='text-sm text-muted-foreground'>
+                                  {item.quantity} {item.unit || ""}
+                                </span>
+                              </li>
+                            );
+                          })}
                         </ul>
                       </div>
                     )
@@ -353,6 +397,9 @@ export function ShoppingListClient() {
                 </CardContent>
               </Card>
             )}
+
+            {/* General Notes from Admin */}
+            <GeneralNotes />
           </>
         )}
       </div>

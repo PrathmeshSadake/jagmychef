@@ -7,6 +7,9 @@ export type RecipeWithIngredients = Recipe & {
 
 export async function getRecipes(): Promise<RecipeWithIngredients[]> {
   return prisma.recipe.findMany({
+    where: {
+      status: "published",
+    },
     include: {
       ingredients: true,
       categories: true,
@@ -18,6 +21,21 @@ export async function getRecipes(): Promise<RecipeWithIngredients[]> {
 }
 
 export async function getRecipeById(
+  id: string
+): Promise<RecipeWithIngredients | null> {
+  return prisma.recipe.findUnique({
+    where: {
+      id,
+      status: "published",
+    },
+    include: {
+      ingredients: true,
+      categories: true,
+    },
+  });
+}
+
+export async function getRecipeByIdAdmin(
   id: string
 ): Promise<RecipeWithIngredients | null> {
   return prisma.recipe.findUnique({
@@ -40,6 +58,9 @@ export async function getSelectedRecipes(
           ingredients: true,
           categories: true,
         },
+        where: {
+          status: "published",
+        },
       },
     },
   });
@@ -56,6 +77,9 @@ export async function getShoppingList(userId = "default-user") {
         include: {
           ingredients: true,
           categories: true,
+        },
+        where: {
+          status: "published",
         },
       },
     },

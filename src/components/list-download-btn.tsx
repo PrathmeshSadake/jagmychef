@@ -17,6 +17,7 @@ interface ListDownloadButtonProps {
       name: string;
       description?: string;
       prepTime?: string;
+      image?: string;
       ingredients: Array<{
         id: string;
         name: string;
@@ -87,6 +88,10 @@ export function ListDownloadButton({ list }: ListDownloadButtonProps) {
 
       // Get organized shopping list from AI
       const organizedList = await getOrganizedList();
+
+      // Fetch all notes from the database
+      const notesResponse = await fetch("/api/notes/all");
+      const notes = await notesResponse.json();
 
       // Initialize PDF document
       const doc = new jsPDF();
@@ -286,6 +291,100 @@ export function ListDownloadButton({ list }: ListDownloadButtonProps) {
           currentY += 5;
         }
       });
+
+      // Add recipes image gallery section
+      doc.addPage();
+      currentY = 20;
+
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(66, 135, 245);
+      doc.text("Recipes Gallery", marginLeft, currentY);
+      currentY += 10;
+
+      // Reset text color
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(12);
+
+      // Add recipe images with names
+      for (const recipe of list.recipes) {
+        // Skip recipes without images
+        if (!recipe.image) continue;
+
+        // Check if we need a new page
+        if (currentY > 250) {
+          doc.addPage();
+          currentY = 20;
+        }
+
+        try {
+          // Add recipe name
+          doc.setFont("helvetica", "bold");
+          doc.text(recipe.name, marginLeft, currentY);
+          currentY += 8;
+          doc.setFont("helvetica", "normal");
+
+          // Convert image URL to base64 for jsPDF
+          const imgData = await fetch(recipe.image)
+            .then((response) => response.blob())
+            .then((blob) => {
+              return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(blob);
+              });
+            });
+
+          // Add image to PDF
+          if (imgData) {
+            const imgWidth = 160;
+            const imgHeight = 100;
+            doc.addImage(
+              imgData as string,
+              "JPEG",
+              marginLeft,
+              currentY,
+              imgWidth,
+              imgHeight
+            );
+            currentY += imgHeight + 15; // Add space after the image
+          }
+        } catch (error) {
+          console.error(`Error adding image for ${recipe.name}:`, error);
+          // Continue with the next recipe even if this one fails
+          currentY += 10;
+        }
+      }
+
+      // Add notes section before the office use page
+      if (notes && notes.length > 0) {
+        doc.addPage();
+        currentY = 20;
+
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(66, 135, 245);
+        doc.text("Notes", marginLeft, currentY);
+        currentY += 10;
+
+        // Reset text color
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "normal");
+
+        // Display all notes
+        for (const note of notes) {
+          // Check if we need a new page
+          if (currentY > 250) {
+            doc.addPage();
+            currentY = 20;
+          }
+
+          const splitNote = doc.splitTextToSize(note.content, 170);
+          doc.text(splitNote, marginLeft, currentY);
+          currentY += 6 * splitNote.length + 5; // Add space between notes
+        }
+      }
 
       // ===== OFFICE USE SECTION =====
       doc.addPage();

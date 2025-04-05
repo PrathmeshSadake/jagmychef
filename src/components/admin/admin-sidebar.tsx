@@ -68,6 +68,12 @@ export function AdminSidebar() {
       label: "Shopping Lists",
       tooltip: "Manage Shopping Lists",
     },
+    {
+      href: "/admin/notes",
+      icon: <ListChecks className='h-5 w-5' />,
+      label: "Notes",
+      tooltip: "Manage General Notes",
+    },
   ];
 
   return (

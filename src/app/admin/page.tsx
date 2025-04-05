@@ -16,8 +16,8 @@ import { IngredientTable } from "@/components/ingredient-table";
 import prisma from "@/lib/db";
 
 export default async function AdminPage() {
-  // Fetch recipes with ingredients count
-  const recipes = await prisma.recipe.findMany({
+  // Fetch all recipes with ingredients count
+  const allRecipes = await prisma.recipe.findMany({
     include: {
       _count: {
         select: { ingredients: true },
@@ -29,6 +29,13 @@ export default async function AdminPage() {
       createdAt: "desc",
     },
   });
+
+  // Separate published and draft recipes
+  const publishedRecipes = allRecipes.filter(
+    (recipe) => recipe.status === "published" || !recipe.status
+  );
+
+  const draftRecipes = allRecipes.filter((recipe) => recipe.status === "draft");
 
   // Fetch ingredients with their recipe names
   const ingredients = await prisma.ingredient.findMany({
@@ -47,13 +54,14 @@ export default async function AdminPage() {
   const listsCount = await prisma.list.count();
 
   // Calculate stats
-  const totalRecipes = recipes.length;
+  const totalRecipes = allRecipes.length;
   const totalIngredients = ingredients.length;
+  const totalDrafts = draftRecipes.length;
 
   // Calculate recipes added this month
   const now = new Date();
   const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const recipesThisMonth = recipes.filter(
+  const recipesThisMonth = allRecipes.filter(
     (recipe) => new Date(recipe.createdAt) >= firstDayOfMonth
   ).length;
 
@@ -130,7 +138,7 @@ export default async function AdminPage() {
         </div>
       </div>
 
-      <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
+      <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-4'>
         <Card>
           <CardHeader className='pb-2'>
             <CardTitle className='text-sm font-medium'>Total Recipes</CardTitle>
@@ -140,6 +148,24 @@ export default async function AdminPage() {
             <p className='text-xs text-muted-foreground mt-1'>
               +{recipesThisMonth} added this month
             </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className='pb-2'>
+            <CardTitle className='text-sm font-medium'>
+              Published Recipes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className='text-2xl font-bold'>{publishedRecipes.length}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className='pb-2'>
+            <CardTitle className='text-sm font-medium'>Draft Recipes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className='text-2xl font-bold'>{draftRecipes.length}</div>
           </CardContent>
         </Card>
         <Card>
@@ -155,43 +181,38 @@ export default async function AdminPage() {
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Generated Lists
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold'>{listsCount}</div>
-
-            <div>
-              <Link
-                href={"/admin/lists"}
-                className='text-xs text-muted-foreground mt-1'
-              >
-                View
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       <div className='mt-8'>
         <Tabs defaultValue='recipes'>
           <TabsList>
-            <TabsTrigger value='recipes'>Recipes</TabsTrigger>
+            <TabsTrigger value='recipes'>Published Recipes</TabsTrigger>
+            <TabsTrigger value='drafts'>Draft Recipes</TabsTrigger>
             <TabsTrigger value='ingredients'>Ingredients</TabsTrigger>
           </TabsList>
           <TabsContent value='recipes' className='mt-4'>
             <Card>
               <CardHeader>
-                <CardTitle>Recipe Management</CardTitle>
+                <CardTitle>Published Recipes</CardTitle>
                 <CardDescription>
-                  View and manage all recipes in your database.
+                  View and manage all published recipes in your database.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <RecipeTable recipes={recipes} />
+                <RecipeTable recipes={publishedRecipes} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value='drafts' className='mt-4'>
+            <Card>
+              <CardHeader>
+                <CardTitle>Draft Recipes</CardTitle>
+                <CardDescription>
+                  View and manage your draft recipes.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RecipeTable recipes={draftRecipes} />
               </CardContent>
             </Card>
           </TabsContent>

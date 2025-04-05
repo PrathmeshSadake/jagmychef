@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Edit, Trash2, EyeIcon, Loader2, Search } from "lucide-react";
+import { Edit, Trash2, EyeIcon, Loader2, Search, Copy, EyeOff, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Recipe } from "@prisma/client";
 
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,6 +44,7 @@ export function RecipeTable({ recipes }: RecipeTableProps) {
   const [recipeToDelete, setRecipeToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [processingStatusIds, setProcessingStatusIds] = useState<string[]>([]);
 
   const handleDelete = async () => {
     if (!recipeToDelete) return;
@@ -76,6 +78,38 @@ export function RecipeTable({ recipes }: RecipeTableProps) {
     setIsDeleteDialogOpen(true);
   };
 
+  // Function to handle duplicating a recipe
+  const handleDuplicate = (id: string) => {
+    router.push(`/admin/recipes/${id}/duplicate`);
+  };
+
+  // Function to toggle recipe status (publish/unpublish)
+  const toggleRecipeStatus = async (id: string) => {
+    // Add recipe to processing state to show loading indicator
+    setProcessingStatusIds(prev => [...prev, id]);
+    
+    try {
+      const response = await fetch(`/api/recipes/${id}/toggle-status`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        // Refresh the page to show updated data
+        router.refresh();
+      } else {
+        console.error("Failed to toggle recipe status");
+      }
+    } catch (error) {
+      console.error("Error toggling recipe status:", error);
+    } finally {
+      // Remove recipe from processing state
+      setProcessingStatusIds(prev => prev.filter(recipeId => recipeId !== id));
+    }
+  };
+
   // Filter recipes based on search term
   const filteredRecipes = recipes.filter((recipe) =>
     recipe.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -99,14 +133,15 @@ export function RecipeTable({ recipes }: RecipeTableProps) {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
-                <TableHead className='w-[150px] text-center'>Actions</TableHead>
+                <TableHead className='w-[250px] text-center'>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredRecipes.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} className='text-center py-6'>
+                  <TableCell colSpan={4} className='text-center py-6'>
                     {searchTerm
                       ? "No recipes found matching your search."
                       : "No recipes found. Add your first recipe!"}
@@ -116,6 +151,23 @@ export function RecipeTable({ recipes }: RecipeTableProps) {
                 filteredRecipes.map((recipe) => (
                   <TableRow key={recipe.id}>
                     <TableCell className='font-medium'>{recipe.name}</TableCell>
+                    <TableCell>
+                      {recipe.status === "draft" ? (
+                        <Badge
+                          variant='outline'
+                          className='bg-yellow-50 text-yellow-800 border-yellow-200'
+                        >
+                          Draft
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant='outline'
+                          className='bg-green-50 text-green-800 border-green-200'
+                        >
+                          Published
+                        </Badge>
+                      )}
+                    </TableCell>
                     <TableCell>
                       {new Date(recipe.createdAt).toLocaleDateString()}
                     </TableCell>
@@ -151,6 +203,55 @@ export function RecipeTable({ recipes }: RecipeTableProps) {
                             </Link>
                           </TooltipTrigger>
                           <TooltipContent>Edit recipe</TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant='ghost'
+                              size='icon'
+                              className='h-8 w-8'
+                              onClick={() => handleDuplicate(recipe.id)}
+                            >
+                              <Copy className='h-4 w-4' />
+                              <span className='sr-only'>Duplicate recipe</span>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Duplicate recipe</TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant='ghost'
+                              size='icon'
+                              className={`h-8 w-8 ${
+                                recipe.status === "published"
+                                  ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                                  : "text-green-600 hover:text-green-700 hover:bg-green-50"
+                              }`}
+                              onClick={() => toggleRecipeStatus(recipe.id)}
+                              disabled={processingStatusIds.includes(recipe.id)}
+                            >
+                              {processingStatusIds.includes(recipe.id) ? (
+                                <Loader2 className='h-4 w-4 animate-spin' />
+                              ) : recipe.status === "published" ? (
+                                <EyeOff className='h-4 w-4' />
+                              ) : (
+                                <Eye className='h-4 w-4' />
+                              )}
+                              <span className='sr-only'>
+                                {recipe.status === "published"
+                                  ? "Unpublish recipe"
+                                  : "Publish recipe"}
+                              </span>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {recipe.status === "published"
+                              ? "Unpublish recipe"
+                              : "Publish recipe"}
+                          </TooltipContent>
                         </Tooltip>
 
                         <Tooltip>
