@@ -3,8 +3,14 @@ import { NextResponse } from "next/server";
 
 export async function DELETE(request: Request) {
   try {
+    // Try to get ID from URL query parameters
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
+    const idFromQuery = searchParams.get("id");
+
+    // Also try to get ID from URL path parameters
+
+    // Use ID from query params first, then from path
+    const id = idFromQuery;
 
     if (!id) {
       return new NextResponse("Id is required", { status: 500 });

@@ -64,6 +64,9 @@ export function RecipeTable({ recipes }: RecipeTableProps) {
         `/api/recipes/${recipeToDelete}?id=${recipeToDelete}`,
         {
           method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
         }
       );
 
@@ -89,7 +92,7 @@ export function RecipeTable({ recipes }: RecipeTableProps) {
 
   // Function to handle duplicating a recipe
   const handleDuplicate = (id: string) => {
-  router.push(`/admin/recipes/${id}/duplicate`);
+    router.push(`/admin/recipes/${id}/duplicate`);
   };
 
   // Function to toggle recipe status (publish/unpublish)

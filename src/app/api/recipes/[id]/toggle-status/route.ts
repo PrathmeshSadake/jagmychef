@@ -4,12 +4,20 @@ import { revalidatePath } from "next/cache";
 
 export async function POST(request: NextRequest) {
   try {
-    // const { searchParams } = new URL(request.url);
-    // const id = searchParams.get("id");
+    const { searchParams } = new URL(request.url);
+    const idFromQuery = searchParams.get("id");
 
-    // console.log("id", id);
+    // Try to get ID from body as a fallback
+    let bodyId;
+    try {
+      const body = await request.json();
+      bodyId = body.id;
+    } catch (error) {
+      // If parsing JSON fails, that's okay - we might have the ID from query params
+    }
 
-    const { id } = await request.json();
+    // Use ID from query params first, then from body
+    const id = idFromQuery || bodyId;
 
     if (!id) {
       return NextResponse.json(
