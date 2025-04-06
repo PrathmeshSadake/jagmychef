@@ -72,7 +72,7 @@ export default function RecipeRequestButton() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant='outline' className='w-full'>
+        <Button variant='outline' className='w-full cursor-pointer'>
           Request a Recipe
         </Button>
       </DialogTrigger>

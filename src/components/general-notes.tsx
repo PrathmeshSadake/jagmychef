@@ -45,7 +45,7 @@ export function GeneralNotes() {
       <CardHeader>
         <CardTitle>General Notes</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className=''>
         {loading ? (
           <div className='flex justify-center py-4'>
             <Loader className='h-6 w-6 animate-spin' />
@@ -53,13 +53,13 @@ export function GeneralNotes() {
         ) : error ? (
           <div className='text-center py-4 text-red-500'>{error}</div>
         ) : (
-          <ul className='space-y-2'>
+          <ol className='space-y-2 list-decimal pl-5'>
             {notes.map((note) => (
               <li key={note.id} className='p-2 rounded-sm'>
                 <div className='whitespace-pre-wrap'>{note.content}</div>
               </li>
             ))}
-          </ul>
+          </ol>
         )}
       </CardContent>
     </Card>

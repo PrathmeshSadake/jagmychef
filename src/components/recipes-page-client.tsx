@@ -5,13 +5,14 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useAtom } from "jotai";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { RecipeCard } from "@/components/recipe-card";
 import {
   recipesDataAtom,
   selectedRecipeIdsAtom,
   selectedRecipesAtom,
 } from "@/lib/atoms";
+import { cn } from "@/lib/utils";
 
 interface Recipe {
   id: string;
@@ -97,10 +98,16 @@ export default function RecipesPageClient({
             <Filter className='h-4 w-4' />
             Filter
           </Button>
-          <Link href='/shopping-list'>
-            <Button size='sm' className='gap-1'>
-              Selected ({selectedRecipes.length}/4)
-            </Button>
+          <Link
+            href='/shopping-list'
+            className={cn(
+              buttonVariants({
+                size: "sm",
+              }),
+              "gap-1"
+            )}
+          >
+            Selected ({selectedRecipes.length}/4)
           </Link>
         </div>
       </div>

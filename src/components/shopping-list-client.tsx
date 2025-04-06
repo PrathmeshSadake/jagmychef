@@ -108,7 +108,15 @@ export function ShoppingListClient() {
 
     const fetchIngredients = async () => {
       if (selectedRecipeIds.length === 0) {
-        setShoppingList({});
+        if (Object.keys(shoppingList).length !== 0) {
+          setShoppingList({});
+        }
+        if (generatedList !== null) {
+          setGeneratedList(null); // Clear generated list
+        }
+        if (generatedInstructions.length !== 0) {
+          setGeneratedInstructions([]); // Clear generated instructions
+        }
         return;
       }
 
@@ -161,11 +169,12 @@ export function ShoppingListClient() {
     fetchIngredients();
   }, [
     selectedRecipeIds,
+    hasInitiallyFetched,
     haveRecipesChanged,
     generateOrganizedList,
-    hasInitiallyFetched,
     previousRecipeIds,
     generatedList,
+    shoppingList,
   ]);
 
   // Remove recipe from selection
@@ -399,7 +408,7 @@ export function ShoppingListClient() {
             )}
 
             {/* General Notes from Admin */}
-            <GeneralNotes />
+            {selectedRecipeIds.length !== 0 && !isLoading && <GeneralNotes />}
           </>
         )}
       </div>

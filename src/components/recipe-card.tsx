@@ -95,35 +95,21 @@ export function RecipeCard({
   };
 
   return (
-    <Card className='overflow-hidden h-full flex flex-col'>
-      <div className='relative'>
-        {/* <div className='absolute top-2 right-2 z-10'>
-          <Checkbox
-            id={`recipe-${recipe.id}`}
-            className='h-5 w-5 bg-white rounded-sm'
-            checked={selected}
-            onCheckedChange={handleSelection}
-            disabled={
-              isLoading ||
-              (!selected && selectedRecipeIds.length >= maxSelections)
-            }
-            aria-label={selected ? "Remove from selection" : "Add to selection"}
-          />
-        </div> */}
-        <div className='relative h-36 w-full'>
-          <Image
-            src={recipe.image || "/placeholder.svg?height=200&width=400"}
-            alt={recipe.name}
-            fill
-            className='h-full w-full object-cover'
-            priority={false}
-          />
-        </div>
+    <Card className='overflow-hidden h-full flex flex-col pt-0'>
+      <div className='relative h-44 w-full'>
+        <Image
+          src={recipe.image || "/placeholder.svg?height=200&width=400"}
+          alt={recipe.name}
+          fill
+          className='h-full w-full object-cover'
+          priority={false}
+        />
       </div>
-      <CardHeader className=''>
-        <div className='flex justify-between items-start'>
-          <CardTitle className='text-lg line-clamp-1'>{recipe.name}</CardTitle>
-        </div>
+
+      <CardHeader className='my-0'>
+        <CardTitle className='text-lg line-clamp-1 my-0'>
+          {recipe.name}
+        </CardTitle>
       </CardHeader>
       <CardContent className='flex-grow'>
         <p className='text-sm text-black line-clamp-2'>
