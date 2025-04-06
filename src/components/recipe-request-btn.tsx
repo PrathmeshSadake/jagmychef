@@ -46,16 +46,22 @@ export default function RecipeRequestButton() {
     setIsLoading(true);
 
     try {
+      const requestData = {
+        ...formData,
+        email: userDetails?.email || "",
+      };
+
       const response = await fetch("/api/recipe-requests", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(requestData),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to submit recipe request");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to submit recipe request");
       }
 
       toast.success("Recipe request submitted successfully!");

@@ -36,6 +36,7 @@ interface ShoppingListActionsProps {
   checkedItems?: {
     [category: string]: boolean[];
   };
+  listId?: string | null;
 }
 
 interface Note {
@@ -49,6 +50,7 @@ export function ShoppingListActions({
   selectedRecipeIds = [],
   selectedRecipes = [],
   checkedItems = {},
+  listId = null,
 }: ShoppingListActionsProps) {
   console.log(shoppingList);
   console.log(checkedItems);

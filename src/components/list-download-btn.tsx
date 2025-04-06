@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { DownloadIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import jsPDF from "jspdf";
 
 interface ListDownloadButtonProps {
   list: {
+    id: string;
     name: string;
     email: string;
     Date: Date;
@@ -37,6 +38,32 @@ interface ListDownloadButtonProps {
 export function ListDownloadButton({ list }: ListDownloadButtonProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [savedShoppingItems, setSavedShoppingItems] = useState<any | null>(
+    null
+  );
+
+  // Fetch saved shopping list items from database
+  useEffect(() => {
+    const fetchSavedItems = async () => {
+      if (!list.id) return;
+
+      try {
+        const response = await fetch(
+          `/api/shopping-list-items?listId=${list.id}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.items) {
+            setSavedShoppingItems(data.items);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching saved shopping list items:", error);
+      }
+    };
+
+    fetchSavedItems();
+  }, [list.id]);
 
   // Convert shopping list to a simple text format for the AI
   const formatShoppingListForAI = () => {
@@ -82,12 +109,47 @@ export function ListDownloadButton({ list }: ListDownloadButtonProps) {
     }
   };
 
+  // Check if an item is checked - using saved data from database
+  const isItemChecked = (itemName: string, categoryName: string): boolean => {
+    if (!savedShoppingItems || !savedShoppingItems[categoryName]) {
+      return false;
+    }
+
+    const item = savedShoppingItems[categoryName].find(
+      (item: any) => item.name.toLowerCase() === itemName.toLowerCase()
+    );
+
+    return item ? item.isChecked : false;
+  };
+
   const handlePdfDownload = async () => {
     try {
       setIsDownloading(true);
 
-      // Get organized shopping list from AI
-      const organizedList = await getOrganizedList();
+      // Get organized shopping list from AI or use saved shopping list
+      let organizedList;
+
+      if (savedShoppingItems) {
+        // Convert saved items to the format expected by the PDF generator
+        const categories = Object.keys(savedShoppingItems).map(
+          (categoryName) => {
+            return {
+              name: categoryName,
+              items: savedShoppingItems[categoryName].map((item: any) => ({
+                name: item.name,
+                quantity: item.quantity,
+                unit: item.unit,
+                isChecked: item.isChecked,
+              })),
+            };
+          }
+        );
+
+        organizedList = { categories };
+      } else {
+        // If no saved items, generate a new list
+        organizedList = await getOrganizedList();
+      }
 
       // Fetch all notes from the database
       const notesResponse = await fetch("/api/notes/all");
@@ -117,7 +179,7 @@ export function ListDownloadButton({ list }: ListDownloadButtonProps) {
         if (logoData) {
           const logoWidth = 100;
           const logoHeight = 40;
-          const logoX = (doc.internal.pageSize.getWidth() - logoWidth) / 2;
+          const logoX = marginLeft;
           doc.addImage(
             logoData as string,
             "PNG",
@@ -167,7 +229,7 @@ export function ListDownloadButton({ list }: ListDownloadButtonProps) {
       );
       currentY += 15;
 
-      // If we have an organized list from the AI, use it
+      // Add user list with checkboxes for admin
       if (organizedList && organizedList.categories) {
         organizedList.categories.forEach((category: any) => {
           // Check if we need a new page
@@ -188,10 +250,44 @@ export function ListDownloadButton({ list }: ListDownloadButtonProps) {
           doc.setFontSize(12);
           doc.setFont("helvetica", "normal");
 
-          // Category items
+          // Category items with checkboxes
           category.items.forEach((item: any) => {
-            const itemText = `• ${item.quantity} ${item.unit || ""} ${item.name}`;
-            doc.text(itemText, marginLeft, currentY);
+            const isChecked =
+              item.isChecked || isItemChecked(item.name, category.name);
+
+            // Draw unchecked box if not checked, or checked box if checked
+            if (isChecked) {
+              // Draw checked checkbox with X
+              doc.rect(marginLeft, currentY - 3, 5, 5);
+              doc.text("✓", marginLeft + 1, currentY);
+
+              // Draw strikethrough text
+              const itemText = `${item.quantity} ${item.unit || ""} ${item.name}`;
+              doc.setTextColor(150, 150, 150); // Lighter text for checked items
+              doc.text(itemText, marginLeft + 8, currentY);
+
+              // Draw strikethrough line
+              const textWidth = doc.getTextWidth(itemText);
+              doc.line(
+                marginLeft + 8,
+                currentY - 2,
+                marginLeft + 8 + textWidth,
+                currentY - 2
+              );
+
+              // Reset color for next item
+              doc.setTextColor(0, 0, 0);
+            } else {
+              // Draw empty checkbox
+              doc.rect(marginLeft, currentY - 3, 5, 5);
+              // Draw normal text
+              doc.text(
+                `${item.quantity} ${item.unit || ""} ${item.name}`,
+                marginLeft + 8,
+                currentY
+              );
+            }
+
             currentY += 6;
           });
 
@@ -389,36 +485,6 @@ export function ListDownloadButton({ list }: ListDownloadButtonProps) {
         }
       }
 
-      // Add notes section before the office use page
-      if (notes && notes.length > 0) {
-        doc.addPage();
-        currentY = 20;
-
-        doc.setFontSize(14);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(66, 135, 245);
-        doc.text("Notes", marginLeft, currentY);
-        currentY += 10;
-
-        // Reset text color
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "normal");
-
-        // Display all notes
-        for (const note of notes) {
-          // Check if we need a new page
-          if (currentY > 250) {
-            doc.addPage();
-            currentY = 20;
-          }
-
-          const splitNote = doc.splitTextToSize(note.content, 170);
-          doc.text(splitNote, marginLeft, currentY);
-          currentY += 6 * splitNote.length + 5; // Add space between notes
-        }
-      }
-
       // ===== OFFICE USE SECTION =====
       doc.addPage();
       currentY = 20;
@@ -560,6 +626,36 @@ export function ListDownloadButton({ list }: ListDownloadButtonProps) {
           });
         }
       });
+
+      // Add notes section after office use
+      if (notes && notes.length > 0) {
+        doc.addPage();
+        currentY = 20;
+
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(66, 135, 245);
+        doc.text("Notes", marginLeft, currentY);
+        currentY += 10;
+
+        // Reset text color
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "normal");
+
+        // Display all notes
+        for (const note of notes) {
+          // Check if we need a new page
+          if (currentY > 250) {
+            doc.addPage();
+            currentY = 20;
+          }
+
+          const splitNote = doc.splitTextToSize(note.content, 170);
+          doc.text(splitNote, marginLeft, currentY);
+          currentY += 6 * splitNote.length + 5; // Add space between notes
+        }
+      }
 
       // Save the PDF
       doc.save(`${list.name}-list.pdf`);

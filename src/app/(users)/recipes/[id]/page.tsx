@@ -71,7 +71,9 @@ export default function RecipeDetailPage({
           </div>
 
           <div>
-            <h2 className='text-xl font-semibold mb-3'>Description</h2>
+            <h2 className='text-xl font-semibold mb-3 text-primary'>
+              Description
+            </h2>
             <p className='text-muted-foreground'>
               {recipe.description ||
                 "A delicious recipe with carefully selected ingredients that will delight your taste buds and impress your guests."}
@@ -81,7 +83,7 @@ export default function RecipeDetailPage({
 
         <div className='space-y-6'>
           <div className='bg-muted p-6 rounded-lg'>
-            <h2 className='text-xl font-semibold mb-4 flex items-center'>
+            <h2 className='text-xl text-primary font-semibold mb-4 flex items-center'>
               <Utensils className='mr-2 h-5 w-5' />
               Ingredients
             </h2>
@@ -118,7 +120,7 @@ export default function RecipeDetailPage({
           </div>
 
           <div>
-            <h2 className='text-xl font-semibold mb-3'>
+            <h2 className='text-xl text-primary font-semibold mb-3'>
               Prep Instructions for the Dish
             </h2>
             <ol className='space-y-4 ml-5 list-decimal'>

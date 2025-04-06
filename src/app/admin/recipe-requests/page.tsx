@@ -97,6 +97,36 @@ export default function RecipeRequestsAdmin() {
 
       if (!response.ok) throw new Error("Failed to update status");
 
+      // Send email notification for approved or rejected statuses
+      if (action === "approved" || action === "rejected") {
+        const requestDetails = requests.find(
+          (req: any) => req.id === requestId
+        );
+
+        if (requestDetails) {
+          // Send notification email
+          const emailResponse = await fetch(
+            "/api/recipe-requests/notification",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                to: requestDetails.email,
+                name: requestDetails.email.split("@")[0], // Use part before @ as name
+                status: action,
+                recipeName: requestDetails.name,
+              }),
+            }
+          );
+
+          if (!emailResponse.ok) {
+            console.error("Failed to send notification email");
+          }
+        }
+      }
+
       toast.success(
         `Recipe request ${action === "approved" ? "approved" : "rejected"} successfully`
       );
@@ -279,7 +309,7 @@ export default function RecipeRequestsAdmin() {
               {confirmDialog.action === "approved" &&
                 `Are you sure you want to approve the request for "${confirmDialog.requestName}"? An email will be sent to notify the requester.`}
               {confirmDialog.action === "rejected" &&
-                `Are you sure you want to reject the request for "${confirmDialog.requestName}"?`}
+                `Are you sure you want to reject the request for "${confirmDialog.requestName}"? An email will be sent to notify the requester.`}
               {confirmDialog.action === "pending" &&
                 `Are you sure you want to reset the status of "${confirmDialog.requestName}" to pending?`}
             </DialogDescription>

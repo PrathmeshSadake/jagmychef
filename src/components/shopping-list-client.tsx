@@ -43,6 +43,50 @@ export function ShoppingListClient() {
     []
   );
   const [hasInitiallyFetched, setHasInitiallyFetched] = useState(false);
+  const [listId, setListId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Create a memoized map of item names to their category and index
+  // to optimize checkbox lookups without triggering re-renders
+  const createItemLookupMap = useCallback(() => {
+    const lookupMap = new Map();
+
+    Object.entries(shoppingList).forEach(([category, items]) => {
+      items.forEach((item, index) => {
+        // Use lowercase item name as key for case-insensitive comparison
+        const key = item.name.toLowerCase();
+        lookupMap.set(key, { category, index });
+      });
+    });
+
+    return lookupMap;
+  }, [shoppingList]);
+
+  // Memoize the lookup map
+  const itemLookupMap = useMemo(
+    () => createItemLookupMap(),
+    [createItemLookupMap]
+  );
+
+  // Find checkbox status for an item using the lookup map
+  const getItemCheckStatus = useCallback(
+    (itemName: string) => {
+      const key = itemName.toLowerCase();
+      const itemInfo = itemLookupMap.get(key);
+
+      if (itemInfo) {
+        const { category, index } = itemInfo;
+        return {
+          isChecked: checkedItems[category]?.[index] || false,
+          categoryKey: category,
+          originalIndex: index,
+        };
+      }
+
+      return { isChecked: false, categoryKey: "", originalIndex: -1 };
+    },
+    [itemLookupMap, checkedItems]
+  );
 
   // Compare recipe arrays to detect changes
   const haveRecipesChanged = useCallback(
@@ -96,6 +140,78 @@ export function ShoppingListClient() {
     }
   }, [shoppingList, selectedRecipeIds, selectedRecipes]);
 
+  // Save shopping list to database
+  const saveShoppingList = useCallback(async () => {
+    if (!generatedList || !listId) return;
+
+    try {
+      setIsSaving(true);
+
+      // Prepare items for saving
+      const items = generatedList.categories.flatMap((category: any) =>
+        category.items.map((item: any) => {
+          const { isChecked } = getItemCheckStatus(item.name);
+          return {
+            name: item.name,
+            quantity: item.quantity || "",
+            unit: item.unit || "",
+            category: category.name,
+            isChecked: isChecked,
+          };
+        })
+      );
+
+      // Save to database
+      const response = await fetch("/api/shopping-list-items", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          listId: listId,
+          items: items,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save shopping list items");
+      }
+
+      console.log("Shopping list saved successfully");
+    } catch (error) {
+      console.error("Error saving shopping list:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [generatedList, listId, getItemCheckStatus]);
+
+  // Create initial list record if none exists
+  const createShoppingListRecord = useCallback(async () => {
+    if (selectedRecipeIds.length === 0 || listId) return;
+
+    try {
+      // Create a basic list record
+      const response = await fetch("/api/shopping-list", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "My Shopping List",
+          email: "user@example.com", // You might want to get this from user context
+          date: new Date().toISOString(),
+          time: "12:00",
+          recipeIds: selectedRecipeIds,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create shopping list");
+      }
+
+      const data = await response.json();
+      setListId(data.list.id);
+    } catch (error) {
+      console.error("Error creating shopping list:", error);
+    }
+  }, [selectedRecipeIds, listId]);
+
   // Fetch ingredients when selected recipes change
   useEffect(() => {
     // Skip if we've already fetched and there's no change to recipe IDs
@@ -121,6 +237,9 @@ export function ShoppingListClient() {
       }
 
       try {
+        // Create a list record if needed
+        await createShoppingListRecord();
+
         const response = await fetch("/api/ingredients", {
           method: "POST",
           headers: {
@@ -175,6 +294,24 @@ export function ShoppingListClient() {
     previousRecipeIds,
     generatedList,
     shoppingList,
+    createShoppingListRecord,
+  ]);
+
+  // Save shopping list when checkboxes change
+  useEffect(() => {
+    if (hasInitiallyFetched && generatedList && listId) {
+      const saveTimeout = setTimeout(() => {
+        saveShoppingList();
+      }, 1000); // Debounce to avoid too many requests
+
+      return () => clearTimeout(saveTimeout);
+    }
+  }, [
+    checkedItems,
+    generatedList,
+    listId,
+    hasInitiallyFetched,
+    saveShoppingList,
   ]);
 
   // Remove recipe from selection
@@ -209,48 +346,6 @@ export function ShoppingListClient() {
       });
     },
     []
-  );
-
-  // Create a memoized map of item names to their category and index
-  // to optimize checkbox lookups without triggering re-renders
-  const createItemLookupMap = useCallback(() => {
-    const lookupMap = new Map();
-
-    Object.entries(shoppingList).forEach(([category, items]) => {
-      items.forEach((item, index) => {
-        // Use lowercase item name as key for case-insensitive comparison
-        const key = item.name.toLowerCase();
-        lookupMap.set(key, { category, index });
-      });
-    });
-
-    return lookupMap;
-  }, [shoppingList]);
-
-  // Memoize the lookup map
-  const itemLookupMap = useMemo(
-    () => createItemLookupMap(),
-    [createItemLookupMap]
-  );
-
-  // Find checkbox status for an item using the lookup map
-  const getItemCheckStatus = useCallback(
-    (itemName: string) => {
-      const key = itemName.toLowerCase();
-      const itemInfo = itemLookupMap.get(key);
-
-      if (itemInfo) {
-        const { category, index } = itemInfo;
-        return {
-          isChecked: checkedItems[category]?.[index] || false,
-          categoryKey: category,
-          originalIndex: index,
-        };
-      }
-
-      return { isChecked: false, categoryKey: "", originalIndex: -1 };
-    },
-    [itemLookupMap, checkedItems]
   );
 
   return (
