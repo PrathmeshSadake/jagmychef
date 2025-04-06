@@ -416,7 +416,9 @@ export function RecipeForm({ recipe, isDuplicate = false }: RecipeFormProps) {
   };
 
   const removeInstruction = (index: number) => {
-    setInstructions(instructions.filter((_, i) => i !== index));
+    const newInstructions = instructions.filter((_, i) => i !== index);
+    // If removing the last instruction, keep an empty array instead of [""]
+    setInstructions(newInstructions.length === 0 ? [] : newInstructions);
   };
 
   const updateInstruction = (index: number, value: string) => {
@@ -519,7 +521,11 @@ export function RecipeForm({ recipe, isDuplicate = false }: RecipeFormProps) {
   };
 
   const removeChefInstruction = (index: number) => {
-    setChefInstructions(chefInstructions.filter((_, i) => i !== index));
+    const newChefInstructions = chefInstructions.filter((_, i) => i !== index);
+    // If removing the last chef instruction, keep an empty array instead of [""]
+    setChefInstructions(
+      newChefInstructions.length === 0 ? [] : newChefInstructions
+    );
   };
 
   const updateChefInstruction = (index: number, value: string) => {
@@ -527,6 +533,22 @@ export function RecipeForm({ recipe, isDuplicate = false }: RecipeFormProps) {
     newChefInstructions[index] = value;
     setChefInstructions(newChefInstructions);
   };
+
+  // Determine if we're in edit mode (not duplicating)
+  const isEditMode = !!recipe && !isDuplicate;
+
+  // Determine if the form can be submitted
+  const isFormValid =
+    ingredients.every((ing) => ing.name && ing.quantity && ing.unit) &&
+    // Make prep and chef instructions optional by removing their validation
+    // instructions.every((inst) => inst.trim() !== "") &&
+    // chefInstructions.every((inst) => inst.trim() !== "");
+    true;
+
+  // For draft mode, only require minimal information (at least recipe name)
+  const isDraftValid =
+    document.getElementById("name") &&
+    (document.getElementById("name") as HTMLInputElement).value.trim() !== "";
 
   const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>,
@@ -555,16 +577,22 @@ export function RecipeForm({ recipe, isDuplicate = false }: RecipeFormProps) {
         return;
       }
 
-      // Check if instructions are valid
-      if (!instructions.every((inst) => inst.trim() !== "")) {
-        setSubmitError("All instructions must have content");
+      // Only validate non-empty instructions/chef tips
+      // If array has content, make sure each item has content
+      if (
+        instructions.length > 0 &&
+        !instructions.every((inst) => inst.trim() !== "")
+      ) {
+        setSubmitError("All instructions must have content or be removed");
         setIsSubmitting(false);
         return;
       }
 
-      // Check if chef instructions are valid
-      if (!chefInstructions.every((inst) => inst.trim() !== "")) {
-        setSubmitError("All chef tips must have content");
+      if (
+        chefInstructions.length > 0 &&
+        !chefInstructions.every((inst) => inst.trim() !== "")
+      ) {
+        setSubmitError("All chef tips must have content or be removed");
         setIsSubmitting(false);
         return;
       }
@@ -587,15 +615,25 @@ export function RecipeForm({ recipe, isDuplicate = false }: RecipeFormProps) {
       formData.append(`ingredientUnit`, ingredient.unit);
     });
 
-    // Add instructions to formData
-    instructions.forEach((instruction) => {
-      formData.append("instruction", instruction);
-    });
+    // Add instructions to formData - only if there are instructions
+    if (instructions.length > 0) {
+      instructions.forEach((instruction) => {
+        formData.append("instruction", instruction);
+      });
+    } else {
+      // Add an empty flag to indicate empty instructions array
+      formData.append("emptyInstructions", "true");
+    }
 
-    // Add chef instructions to formData
-    chefInstructions.forEach((chefInstruction) => {
-      formData.append("chefInstruction", chefInstruction);
-    });
+    // Add chef instructions to formData - only if there are chef instructions
+    if (chefInstructions.length > 0) {
+      chefInstructions.forEach((chefInstruction) => {
+        formData.append("chefInstruction", chefInstruction);
+      });
+    } else {
+      // Add an empty flag to indicate empty chef instructions array
+      formData.append("emptyChefInstructions", "true");
+    }
 
     // Add categories to formData
     selectedCategories.forEach((category) => {
@@ -646,17 +684,6 @@ export function RecipeForm({ recipe, isDuplicate = false }: RecipeFormProps) {
       setIsSubmitting(false);
     }
   };
-
-  // Determine if the form can be submitted
-  const isFormValid =
-    ingredients.every((ing) => ing.name && ing.quantity && ing.unit) &&
-    instructions.every((inst) => inst.trim() !== "") &&
-    chefInstructions.every((inst) => inst.trim() !== "");
-
-  // For draft mode, only require minimal information (at least recipe name)
-  const isDraftValid =
-    document.getElementById("name") &&
-    (document.getElementById("name") as HTMLInputElement).value.trim() !== "";
 
   return (
     <form onSubmit={(e) => handleSubmit(e, false)} className='space-y-8'>
@@ -1190,39 +1217,47 @@ export function RecipeForm({ recipe, isDuplicate = false }: RecipeFormProps) {
 
       <Card>
         <CardContent className='pt-6'>
-          <h3 className='text-lg font-medium mb-4'>Prep Instructions</h3>
+          <h3 className='text-lg font-medium mb-4'>
+            Prep Instructions{" "}
+            <span className='text-sm text-muted-foreground'>(Optional)</span>
+          </h3>
           <div className='space-y-4'>
-            {instructions.map((instruction, index) => (
-              <div key={index} className='flex gap-3 items-start'>
-                <div className='flex-none pt-3 text-muted-foreground font-medium'>
-                  {index + 1}.
-                </div>
-                <div className='grid gap-2 flex-1'>
-                  <Label htmlFor={`instruction-${index}`} className='sr-only'>
-                    Step {index + 1}
-                  </Label>
-                  <Textarea
-                    id={`instruction-${index}`}
-                    value={instruction}
-                    onChange={(e) => updateInstruction(index, e.target.value)}
-                    placeholder={`Enter step ${index + 1} instructions`}
-                    required
+            {instructions.length > 0 ? (
+              instructions.map((instruction, index) => (
+                <div key={index} className='flex gap-3 items-start'>
+                  <div className='flex-none pt-3 text-muted-foreground font-medium'>
+                    {index + 1}.
+                  </div>
+                  <div className='grid gap-2 flex-1'>
+                    <Label htmlFor={`instruction-${index}`} className='sr-only'>
+                      Step {index + 1}
+                    </Label>
+                    <Textarea
+                      id={`instruction-${index}`}
+                      value={instruction}
+                      onChange={(e) => updateInstruction(index, e.target.value)}
+                      placeholder={`Enter step ${index + 1} instructions`}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='icon'
+                    className='mt-2'
+                    onClick={() => removeInstruction(index)}
                     disabled={isSubmitting}
-                  />
+                    aria-label='Remove instruction'
+                  >
+                    <Trash2 className='h-4 w-4' />
+                  </Button>
                 </div>
-                <Button
-                  type='button'
-                  variant='ghost'
-                  size='icon'
-                  className='mt-2'
-                  onClick={() => removeInstruction(index)}
-                  disabled={instructions.length === 1 || isSubmitting}
-                  aria-label='Remove instruction'
-                >
-                  <Trash2 className='h-4 w-4' />
-                </Button>
+              ))
+            ) : (
+              <div className='text-sm text-muted-foreground'>
+                No prep instructions added yet.
               </div>
-            ))}
+            )}
             <Button
               type='button'
               variant='outline'
@@ -1240,46 +1275,54 @@ export function RecipeForm({ recipe, isDuplicate = false }: RecipeFormProps) {
 
       <Card>
         <CardContent className='pt-6'>
-          <h3 className='text-lg font-medium mb-4'>Chef Instructions</h3>
+          <h3 className='text-lg font-medium mb-4'>
+            Chef Instructions{" "}
+            <span className='text-sm text-muted-foreground'>(Optional)</span>
+          </h3>
           <div className='space-y-4'>
-            {chefInstructions.map((instruction, index) => (
-              <div key={index} className='flex gap-3 items-start'>
-                <div className='flex-none pt-3 text-muted-foreground font-medium'>
-                  {index + 1}.
-                </div>
-                <div className='grid gap-2 flex-1'>
-                  <Label
-                    htmlFor={`chef-instruction-${index}`}
-                    className='sr-only'
-                  >
-                    Chef Step {index + 1}
-                  </Label>
-                  <Textarea
-                    id={`chef-instruction-${index}`}
-                    value={instruction}
-                    onChange={(e) =>
-                      updateChefInstruction(index, e.target.value)
-                    }
-                    placeholder={`Enter chef's special tip or technique for step ${
-                      index + 1
-                    }`}
-                    required
+            {chefInstructions.length > 0 ? (
+              chefInstructions.map((instruction, index) => (
+                <div key={index} className='flex gap-3 items-start'>
+                  <div className='flex-none pt-3 text-muted-foreground font-medium'>
+                    {index + 1}.
+                  </div>
+                  <div className='grid gap-2 flex-1'>
+                    <Label
+                      htmlFor={`chef-instruction-${index}`}
+                      className='sr-only'
+                    >
+                      Chef Step {index + 1}
+                    </Label>
+                    <Textarea
+                      id={`chef-instruction-${index}`}
+                      value={instruction}
+                      onChange={(e) =>
+                        updateChefInstruction(index, e.target.value)
+                      }
+                      placeholder={`Enter chef's special tip or technique for step ${
+                        index + 1
+                      }`}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='icon'
+                    className='mt-2'
+                    onClick={() => removeChefInstruction(index)}
                     disabled={isSubmitting}
-                  />
+                    aria-label='Remove chef instruction'
+                  >
+                    <Trash2 className='h-4 w-4' />
+                  </Button>
                 </div>
-                <Button
-                  type='button'
-                  variant='ghost'
-                  size='icon'
-                  className='mt-2'
-                  onClick={() => removeChefInstruction(index)}
-                  disabled={chefInstructions.length === 1 || isSubmitting}
-                  aria-label='Remove chef instruction'
-                >
-                  <Trash2 className='h-4 w-4' />
-                </Button>
+              ))
+            ) : (
+              <div className='text-sm text-muted-foreground'>
+                No chef instructions added yet.
               </div>
-            ))}
+            )}
             <Button
               type='button'
               variant='outline'
@@ -1304,31 +1347,34 @@ export function RecipeForm({ recipe, isDuplicate = false }: RecipeFormProps) {
         >
           Cancel
         </Button>
-        <Button
-          type='button'
-          variant='secondary'
-          onClick={(e) => {
-            e.preventDefault();
-            const form = e.currentTarget.closest("form") as HTMLFormElement;
-            if (form) {
-              const formEvent = {
-                currentTarget: form,
-                preventDefault: () => {},
-              } as React.FormEvent<HTMLFormElement>;
-              handleSubmit(formEvent, true);
-            }
-          }}
-          disabled={!isDraftValid || isSubmitting}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-              Saving...
-            </>
-          ) : (
-            "Save as Draft"
-          )}
-        </Button>
+        {/* Only show Save as Draft button if not in edit mode */}
+        {!isEditMode && (
+          <Button
+            type='button'
+            variant='secondary'
+            onClick={(e) => {
+              e.preventDefault();
+              const form = e.currentTarget.closest("form") as HTMLFormElement;
+              if (form) {
+                const formEvent = {
+                  currentTarget: form,
+                  preventDefault: () => {},
+                } as React.FormEvent<HTMLFormElement>;
+                handleSubmit(formEvent, true);
+              }
+            }}
+            disabled={!isDraftValid || isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                Saving...
+              </>
+            ) : (
+              "Save as Draft"
+            )}
+          </Button>
+        )}
         <Button type='submit' disabled={!isFormValid || isSubmitting}>
           {isSubmitting ? (
             <>

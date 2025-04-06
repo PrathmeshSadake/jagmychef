@@ -69,8 +69,19 @@ export async function createRecipe(formData: FormData) {
       "ingredientQuantity"
     ) as string[];
     const ingredientUnits = formData.getAll("ingredientUnit") as string[];
-    const instructions = formData.getAll("instruction") as string[];
-    const chefInstructions = formData.getAll("chefInstruction") as string[]; // Use singular "chefInstruction"
+
+    // Check for empty instructions array
+    const emptyInstructions = formData.get("emptyInstructions") === "true";
+    const instructions = emptyInstructions
+      ? []
+      : (formData.getAll("instruction") as string[]);
+
+    // Check for empty chef instructions array
+    const emptyChefInstructions =
+      formData.get("emptyChefInstructions") === "true";
+    const chefInstructions = emptyChefInstructions
+      ? []
+      : (formData.getAll("chefInstruction") as string[]);
 
     const categoryIds = formData.getAll("categoryIds") as string[];
 
@@ -117,7 +128,6 @@ export async function createRecipe(formData: FormData) {
 }
 
 // Function to update an existing recipe
-
 export async function updateRecipe(id: string, formData: FormData) {
   try {
     const name = formData.get("name") as string;
@@ -132,8 +142,19 @@ export async function updateRecipe(id: string, formData: FormData) {
       "ingredientQuantity"
     ) as string[];
     const ingredientUnits = formData.getAll("ingredientUnit") as string[];
-    const instructions = formData.getAll("instruction") as string[];
-    const chefInstructions = formData.getAll("chefInstruction") as string[]; // Use singular "chefInstruction"
+
+    // Check for empty instructions array
+    const emptyInstructions = formData.get("emptyInstructions") === "true";
+    const instructions = emptyInstructions
+      ? []
+      : (formData.getAll("instruction") as string[]);
+
+    // Check for empty chef instructions array
+    const emptyChefInstructions =
+      formData.get("emptyChefInstructions") === "true";
+    const chefInstructions = emptyChefInstructions
+      ? []
+      : (formData.getAll("chefInstruction") as string[]);
 
     const categoryIds = formData.getAll("categoryIds") as string[];
 
@@ -188,6 +209,7 @@ export async function updateRecipe(id: string, formData: FormData) {
     return { success: false, error: "Failed to update recipe" };
   }
 }
+
 export async function deleteRecipe(id: string) {
   try {
     await prisma.recipe.delete({
