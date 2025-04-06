@@ -57,7 +57,7 @@ export function ShoppingListButton({ recipe }: ShoppingListButtonProps) {
 
   return (
     <Button
-      className='w-full gap-1'
+      className='w-full gap-1 cursor-pointer'
       onClick={handleAddToShoppingList}
       disabled={isLoading || isAdded}
     >
