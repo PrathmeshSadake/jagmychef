@@ -14,6 +14,7 @@ import {
   selectedRecipesAtom,
 } from "@/lib/atoms";
 import { ArrowLeft } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Recipe {
   id: string;
@@ -57,15 +58,26 @@ export default function CategoryRecipesPage() {
       </div>
       <h1 className='text-2xl font-bold mb-4'>Recipes in {decodedName}</h1>
       <div className='grid gap-4'>
-        {recipes.map((recipe) => (
-          <RecipeCard
-            key={recipe.id}
-            recipe={recipe as any}
-            isSelected={selectedRecipeIds.includes(recipe.id)}
-            currentSelections={selectedRecipes.length}
-            maxSelections={4}
-          />
-        ))}
+        {recipes.length === 0 ? (
+          <div className='flex flex-col items-center justify-center py-12'>
+            <p className='text-lg text-muted-foreground mb-4'>
+              No recipes found in this category
+            </p>
+            <Link href='/' className={cn(buttonVariants(), "cursor-pointer")}>
+              Back to Categories
+            </Link>
+          </div>
+        ) : (
+          recipes.map((recipe) => (
+            <RecipeCard
+              key={recipe.id}
+              recipe={recipe as any}
+              isSelected={selectedRecipeIds.includes(recipe.id)}
+              currentSelections={selectedRecipes.length}
+              maxSelections={4}
+            />
+          ))
+        )}
       </div>
     </div>
   );

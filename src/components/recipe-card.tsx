@@ -119,14 +119,14 @@ export function RecipeCard({
       </CardContent>
       <CardFooter className='px-4 pt-0 flex justify-between'>
         <Link href={`/recipes/${recipe.id}`}>
-          <Button variant='outline' size='sm'>
+          <Button variant='outline' size='sm' className='cursor-pointer'>
             View Details
           </Button>
         </Link>
         <Button
           variant={selected ? "secondary" : "ghost"}
           size='sm'
-          className='gap-1'
+          className='gap-1 cursor-pointer'
           onClick={handleSelection}
           disabled={
             isLoading ||

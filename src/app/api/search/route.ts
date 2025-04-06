@@ -15,6 +15,7 @@ export async function GET(request: Request) {
     // Search for recipes
     const recipes = await prisma.recipe.findMany({
       where: {
+        status: "published",
         OR: [
           { name: { contains: searchTerm, mode: "insensitive" } },
           // { description: { contains: searchTerm, mode: "insensitive" } },
