@@ -20,11 +20,13 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { ListDownloadButton } from "@/components/list-download-btn";
+import { WorkflowDownloadButton } from "@/components/workflow-download-btn";
 
 export default async function ListDetailPage({ params }: { params: any }) {
+  const id = await params.id;
   const list = await prisma.list.findUnique({
     where: {
-      id: params.id,
+      id: id,
     },
     include: {
       recipes: {
@@ -56,8 +58,11 @@ export default async function ListDetailPage({ params }: { params: any }) {
           </Link>
         </Button>
 
-        {/* Add the download button here */}
-        <ListDownloadButton list={list as any} />
+        {/* Add the download buttons here */}
+        <div className='flex items-center gap-2'>
+          <WorkflowDownloadButton listId={id} />
+          <ListDownloadButton list={list as any} />
+        </div>
       </div>
       <Card className='mb-8'>
         <CardHeader>
