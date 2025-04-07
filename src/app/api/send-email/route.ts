@@ -86,7 +86,6 @@ export async function POST(request: Request) {
               height: auto;
               margin-bottom: 10px;
               display: block;
-              margin-left: auto;
               margin-right: auto;
             }
             
