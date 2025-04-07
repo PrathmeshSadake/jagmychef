@@ -21,7 +21,7 @@ const AdminLayout = async ({ children }: { children: React.ReactNode }) => {
       <SidebarInset className='bg-background'>
         <header className='border-b border-border p-4 flex items-center'>
           <SidebarTrigger className='mr-4' />
-          <h1 className='text-xl font-semibold'>Gro Genie | Jag my Chef</h1>
+          <h1 className='text-xl font-semibold'>Grocery Genie | Jag my Chef</h1>
         </header>
         <main className='p-6'>{children}</main>
       </SidebarInset>

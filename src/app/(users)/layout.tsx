@@ -15,7 +15,7 @@ const UsersLayout = async ({ children }: { children: React.ReactNode }) => {
       <div className='h-36 pt-2 flex justify-between items-center'>
         <Link href={"/"}>
           <img
-            src='https://1p7ctab0bz.ufs.sh/f/LSctCnwEvjMcOtaDpGXE2Xe4QWREkpZdgBVA6fPIqyTxjzro'
+            src='https://1p7ctab0bz.ufs.sh/f/LSctCnwEvjMcFVrYtvday3iXw56pT1NbcA7nvkLUaYjlhdVB'
             className='w-auto h-36 object-contain'
           />
         </Link>

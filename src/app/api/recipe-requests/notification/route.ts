@@ -139,7 +139,7 @@ export async function POST(request: Request) {
         <body>
           <div class="container">
             <div class="header">
-              <img src="https://1p7ctab0bz.ufs.sh/f/LSctCnwEvjMcbjULPdTkFKWqywc8i6h2PtmJBgXDVeLSMrla" alt="GroGenie Logo" class="logo">
+              <img src="https://1p7ctab0bz.ufs.sh/f/LSctCnwEvjMcbjULPdTkFKWqywc8i6h2PtmJBgXDVeLSMrla" alt="Grocery Genie Logo" class="logo">
             </div>
             
             <div class="content">

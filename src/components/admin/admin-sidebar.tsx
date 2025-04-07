@@ -85,7 +85,7 @@ export function AdminSidebar() {
         >
           {!collapsed && (
             <img
-              src='https://1p7ctab0bz.ufs.sh/f/LSctCnwEvjMcbjULPdTkFKWqywc8i6h2PtmJBgXDVeLSMrla'
+              src='https://1p7ctab0bz.ufs.sh/f/LSctCnwEvjMcFVrYtvday3iXw56pT1NbcA7nvkLUaYjlhdVB'
               className='w-auto h-16 object-contain'
             />
           )}
@@ -139,7 +139,7 @@ export function AdminSidebar() {
 
           {!collapsed && (
             <div className='text-xs text-muted-foreground mt-2 px-4'>
-              © {new Date().getFullYear()} Gro Genie Admin
+              © {new Date().getFullYear()} Grocery Genie Admin
             </div>
           )}
         </div>

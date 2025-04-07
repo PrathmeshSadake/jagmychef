@@ -180,7 +180,7 @@ export async function POST(request: Request) {
         <body>
           <div class="container">
             <div class="header">
-              <img src="https://1p7ctab0bz.ufs.sh/f/LSctCnwEvjMcbjULPdTkFKWqywc8i6h2PtmJBgXDVeLSMrla" alt="GroGenie Logo" class="logo">
+              <img src="https://1p7ctab0bz.ufs.sh/f/LSctCnwEvjMcFVrYtvday3iXw56pT1NbcA7nvkLUaYjlhdVB" alt="Grocery Genie Logo" class="logo">
             </div>
             
             <div class="content">
@@ -222,7 +222,7 @@ export async function POST(request: Request) {
             </div>
             
             <div class="footer">
-              <p>Thank you,<br><strong>GroGenie, Jag My Chef</strong></p>
+              <p>Thank you,<br><strong>Grocery Genie, Jag My Chef</strong></p>
             </div>
           </div>
         </body>
@@ -231,7 +231,7 @@ export async function POST(request: Request) {
 
     // Send email using Resend
     const { data, error } = await resend.emails.send({
-      from: "GroGenie <no-reply@zepresume.com>",
+      from: "Grocery Genie <no-reply@zepresume.com>",
       to,
       subject,
       html: htmlContent,

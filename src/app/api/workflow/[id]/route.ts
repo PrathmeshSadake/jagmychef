@@ -126,23 +126,64 @@ export async function GET(request: NextRequest, { params }: { params: any }) {
       });
     });
 
+    // Add logo to the top left
+    const logoUrl =
+      "https://1p7ctab0bz.ufs.sh/f/LSctCnwEvjMcFVrYtvday3iXw56pT1NbcA7nvkLUaYjlhdVB";
+    doc.image(logoUrl, 50, 50, { width: 100 }).moveDown(2);
+
     // Start building the PDF
     // Title
     doc
       .fontSize(18)
       .text("Chef's Appointment Workflow", { align: "center" })
-      .moveDown(1);
+      .moveDown(2);
 
     // Section 1: Assigned Time & Client Details
     doc.fontSize(14).text("1. Assigned Time & Client Details").moveDown(0.5);
 
+    // Create a 2x2 grid for client details
+    const startY = doc.y;
+    const columnWidth = 250;
+
+    // First row
     doc
       .fontSize(12)
-      .text(`- Cooking Time: ${workflowData.clientDetails.cookingTime}`)
-      .text(`- Cleaning Time: ${workflowData.clientDetails.cleaningTime}`)
-      .text(`- Client Name: ${workflowData.clientDetails.name}`)
-      .text(`- Appointment Date: ${workflowData.clientDetails.appointmentDate}`)
-      .moveDown(1);
+      .text(
+        `- Cooking Time: ${workflowData.clientDetails.cookingTime}`,
+        doc.x,
+        startY,
+        { width: columnWidth }
+      );
+
+    doc
+      .fontSize(12)
+      .text(
+        `- Client Name: ${workflowData.clientDetails.name}`,
+        doc.x + columnWidth,
+        startY,
+        { width: columnWidth }
+      );
+
+    // Second row
+    doc
+      .fontSize(12)
+      .text(
+        `- Cleaning Time: ${workflowData.clientDetails.cleaningTime}`,
+        doc.x,
+        startY + 20,
+        { width: columnWidth }
+      );
+
+    doc
+      .fontSize(12)
+      .text(
+        `- Appointment Date: ${workflowData.clientDetails.appointmentDate}`,
+        doc.x + columnWidth,
+        startY + 20,
+        { width: columnWidth }
+      );
+
+    doc.moveDown(3);
 
     // Section 2: Menu Overview
     doc.fontSize(14).text("2. Menu Overview").moveDown(0.5);
@@ -150,7 +191,7 @@ export async function GET(request: NextRequest, { params }: { params: any }) {
     workflowData.menu.forEach((dish: any) => {
       doc.fontSize(12).text(`[ ] Dish ${dish.dishNumber}: ${dish.dishName}`);
     });
-    doc.moveDown(1);
+    doc.moveDown(2);
 
     // Section 3: Cooking Workflow
     doc.fontSize(14).text("3. Cooking Workflow").moveDown(0.5);
@@ -164,8 +205,9 @@ export async function GET(request: NextRequest, { params }: { params: any }) {
       dish.steps.forEach((step: any) => {
         doc.fontSize(12).text(`[ ] ${step}`);
       });
-      doc.moveDown(0.5);
+      doc.moveDown(1);
     });
+    doc.moveDown(1);
 
     // Section 4: Pre-Cooking Checklist
     doc.fontSize(14).text("4. Pre-Cooking Checklist").moveDown(0.5);
@@ -173,7 +215,7 @@ export async function GET(request: NextRequest, { params }: { params: any }) {
     workflowData.preCookingChecklist.forEach((step: any) => {
       doc.fontSize(12).text(`[ ] ${step}`);
     });
-    doc.moveDown(1);
+    doc.moveDown(2);
 
     // Section 5: Assembly & Packing
     doc.fontSize(14).text("5. Assembly & Packing").moveDown(0.5);
@@ -181,7 +223,7 @@ export async function GET(request: NextRequest, { params }: { params: any }) {
     workflowData.assemblyAndPacking.forEach((step: any) => {
       doc.fontSize(12).text(`[ ] ${step}`);
     });
-    doc.moveDown(1);
+    doc.moveDown(2);
 
     // Section 6: Standard Cleaning Protocol
     doc.fontSize(14).text("6. Standard Cleaning Protocol").moveDown(0.5);
@@ -189,27 +231,55 @@ export async function GET(request: NextRequest, { params }: { params: any }) {
     workflowData.cleaningProtocol.forEach((step: any) => {
       doc.fontSize(12).text(`[ ] ${step}`);
     });
-    doc.moveDown(1);
+    doc.moveDown(2);
 
     // Section 7: Completion Sign-Off
     doc.fontSize(14).text("7. Completion Sign-Off").moveDown(0.5);
 
+    // Create a 2x2 grid for sign-off
+    const signOffY = doc.y;
+
     doc
       .fontSize(12)
-      .text(`Chef Name: ${workflowData.completionSignOff.chefName}`)
-      .text(`Assistant Name: ${workflowData.completionSignOff.assistantName}`)
-      .moveDown(1);
+      .text(
+        `Chef Name: ${workflowData.completionSignOff.chefName}`,
+        doc.x,
+        signOffY,
+        { width: columnWidth }
+      );
+
+    doc
+      .fontSize(12)
+      .text(
+        `Assistant Name: ${workflowData.completionSignOff.assistantName}`,
+        doc.x + columnWidth,
+        signOffY,
+        { width: columnWidth }
+      );
+
+    doc.moveDown(2);
 
     doc
       .text(
         "[ ] I confirm that all the checklist as per the above workflow was adhered to by me and my assistant."
       )
-      .moveDown(0.5);
+      .moveDown(1);
 
-    doc
-      .text("Chef Signature: ____________________________")
-      .text("Assistant Signature: ________________________")
-      .text("Date: ____________________");
+    // Signature lines in 2x2 grid
+    const sigY = doc.y;
+    doc.text("Chef Signature: ____________________________", doc.x, sigY, {
+      width: columnWidth,
+    });
+    doc.text(
+      "Assistant Signature: ________________________",
+      doc.x + columnWidth,
+      sigY,
+      { width: columnWidth }
+    );
+
+    doc.text("Date: ____________________", doc.x, sigY + 20, {
+      width: columnWidth,
+    });
 
     // Finalize the PDF
     doc.end();

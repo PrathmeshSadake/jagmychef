@@ -165,7 +165,7 @@ export function ListDownloadButton({ list }: ListDownloadButtonProps) {
       // Add logo at the top of the first page
       try {
         const logoUrl =
-          "https://1p7ctab0bz.ufs.sh/f/LSctCnwEvjMcbjULPdTkFKWqywc8i6h2PtmJBgXDVeLSMrla";
+          "https://1p7ctab0bz.ufs.sh/f/LSctCnwEvjMcFVrYtvday3iXw56pT1NbcA7nvkLUaYjlhdVB";
         const logoData = await fetch(logoUrl)
           .then((response) => response.blob())
           .then((blob) => {
@@ -178,7 +178,7 @@ export function ListDownloadButton({ list }: ListDownloadButtonProps) {
 
         if (logoData) {
           const logoWidth = 100;
-          const logoHeight = 40;
+          const logoHeight = 100;
           const logoX = marginLeft;
           doc.addImage(
             logoData as string,
