@@ -69,6 +69,12 @@ export function AdminSidebar() {
       tooltip: "Manage Shopping Lists",
     },
     {
+      href: "/admin/recipe-requests",
+      icon: <ListChecks className='h-5 w-5' />,
+      label: "Recipe Requests",
+      tooltip: "Manage Recipe Requests",
+    },
+    {
       href: "/admin/notes",
       icon: <ListChecks className='h-5 w-5' />,
       label: "Notes",
@@ -90,14 +96,6 @@ export function AdminSidebar() {
             />
           )}
         </Link>
-        {/* <button
-          onClick={() => setCollapsed(!collapsed)}
-          className='absolute right-2 top-4 p-1 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors'
-        >
-          <ChevronRight
-            className={`h-5 w-5 transform transition-transform ${collapsed ? "rotate-180" : ""}`}
-          />
-        </button> */}
       </SidebarHeader>
 
       <SidebarContent className='py-4'>
