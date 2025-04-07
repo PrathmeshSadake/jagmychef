@@ -66,6 +66,8 @@ interface Category {
   order: number;
 }
 
+type ReactInputRef = React.RefObject<HTMLInputElement>;
+
 // Sortable Table Row component
 function SortableTableRow({
   category,
@@ -83,6 +85,8 @@ function SortableTableRow({
   handleUpdateCategory,
   setEditingCategory,
   openDeleteDialog,
+  setEditImage,
+  setEditImagePreview,
 }: {
   category: Category;
   editingCategory: string | null;
@@ -90,7 +94,7 @@ function SortableTableRow({
   setEditName: (name: string) => void;
   editImage: string;
   editImagePreview: string;
-  editImageInputRef: React.RefObject<HTMLInputElement>;
+  editImageInputRef: ReactInputRef;
   handleEditImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleDragOver: (e: React.DragEvent) => void;
   handleDragLeave: (e: React.DragEvent) => void;
@@ -99,6 +103,8 @@ function SortableTableRow({
   handleUpdateCategory: (id: string) => void;
   setEditingCategory: (id: string | null) => void;
   openDeleteDialog: (id: string) => void;
+  setEditImage: (image: string) => void;
+  setEditImagePreview: (preview: string) => void;
 }) {
   const {
     attributes,
@@ -245,8 +251,8 @@ export default function CategoriesAdmin() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
-  const newImageInputRef = useRef<HTMLInputElement>(null);
-  const editImageInputRef = useRef<HTMLInputElement>(null);
+  const newImageInputRef = useRef<HTMLInputElement>(null) as ReactInputRef;
+  const editImageInputRef = useRef<HTMLInputElement>(null) as ReactInputRef;
   const [newImagePreview, setNewImagePreview] = useState<string>("");
   const [editImagePreview, setEditImagePreview] = useState<string>("");
   const router = useRouter();
@@ -770,6 +776,8 @@ export default function CategoriesAdmin() {
                             handleUpdateCategory={handleUpdateCategory}
                             setEditingCategory={setEditingCategory}
                             openDeleteDialog={openDeleteDialog}
+                            setEditImage={setEditImage}
+                            setEditImagePreview={setEditImagePreview}
                           />
                         ))}
                       </TableBody>
