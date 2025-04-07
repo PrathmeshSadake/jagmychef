@@ -67,7 +67,7 @@ export function ShoppingListActions({
     const fetchLogo = async () => {
       try {
         const response = await fetch(
-          "https://1p7ctab0bz.ufs.sh/f/LSctCnwEvjMcbjULPdTkFKWqywc8i6h2PtmJBgXDVeLSMrla"
+          "https://1p7ctab0bz.ufs.sh/f/LSctCnwEvjMcFVrYtvday3iXw56pT1NbcA7nvkLUaYjlhdVB"
         );
         const blob = await response.blob();
         const reader = new FileReader();
@@ -339,6 +339,26 @@ export function ShoppingListActions({
         currentY += 10;
       }
 
+      // Add Selected Menu section
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(66, 135, 245);
+      doc.text("Your Selected Menu:", marginLeft, currentY);
+      currentY += 8;
+
+      // Reset text color for menu items
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+
+      // List selected recipes with numbers
+      selectedRecipes.forEach((recipe, index) => {
+        doc.text(`${index + 1}. ${recipe.name}`, marginLeft, currentY);
+        currentY += 6;
+      });
+
+      currentY += 6; // Add extra space after menu section
+
       // Ingredients section
       doc.setFontSize(16);
       doc.setFont("helvetica", "bold");
@@ -481,37 +501,38 @@ export function ShoppingListActions({
       }
 
       // General Notes section
-      // if (generalNotes.length > 0) {
-      //   // Add a page break if needed
-      //   if (currentY > 250) {
-      //     doc.addPage();
-      //     currentY = 20;
-      //   }
+      if (generalNotes.length > 0) {
+        // Add a page break if needed
+        if (currentY > 250) {
+          doc.addPage();
+          currentY = 20;
+        }
 
-      //   doc.setFontSize(16);
-      //   doc.setFont("helvetica", "bold");
-      //   doc.setTextColor(66, 135, 245);
-      //   doc.text("General Notes:", marginLeft, currentY);
-      //   currentY += 10;
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(66, 135, 245);
+        doc.text("General Notes:", marginLeft, currentY);
+        currentY += 10;
 
-      //   // Reset text color for notes
-      //   doc.setTextColor(0, 0, 0);
-      //   doc.setFontSize(12);
-      //   doc.setFont("helvetica", "normal");
+        // Reset text color for notes
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "normal");
 
-      //   generalNotes.forEach((note: Note) => {
-      //     // Check if we need a new page
-      //     if (currentY > 250) {
-      //       doc.addPage();
-      //       currentY = 20;
-      //     }
+        generalNotes.forEach((note: Note, index: number) => {
+          // Check if we need a new page
+          if (currentY > 250) {
+            doc.addPage();
+            currentY = 20;
+          }
 
-      //     // Wrap long note content
-      //     const splitText = doc.splitTextToSize(note.content, 170);
-      //     doc.text(splitText, marginLeft, currentY);
-      //     currentY += 6 * splitText.length + 4; // Add extra space between notes
-      //   });
-      // }
+          // Wrap long note content with numbered format
+          const noteText = `${index + 1}. ${note.content}`;
+          const splitText = doc.splitTextToSize(noteText, 170);
+          doc.text(splitText, marginLeft, currentY);
+          currentY += 6 * splitText.length + 4; // Add extra space between notes
+        });
+      }
 
       // Save the PDF
       doc.save("shopping-list.pdf");
