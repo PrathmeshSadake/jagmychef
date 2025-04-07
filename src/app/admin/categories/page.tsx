@@ -11,6 +11,7 @@ import {
   X,
   Upload,
   ArrowLeft,
+  GripVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,11 +41,195 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface Category {
   id: string;
   name: string;
   image: string;
+  order: number;
+}
+
+// Sortable Table Row component
+function SortableTableRow({
+  category,
+  editingCategory,
+  editName,
+  setEditName,
+  editImage,
+  editImagePreview,
+  editImageInputRef,
+  handleEditImageChange,
+  handleDragOver,
+  handleDragLeave,
+  handleDrop,
+  isSubmitting,
+  handleUpdateCategory,
+  setEditingCategory,
+  openDeleteDialog,
+}: {
+  category: Category;
+  editingCategory: string | null;
+  editName: string;
+  setEditName: (name: string) => void;
+  editImage: string;
+  editImagePreview: string;
+  editImageInputRef: React.RefObject<HTMLInputElement>;
+  handleEditImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleDragOver: (e: React.DragEvent) => void;
+  handleDragLeave: (e: React.DragEvent) => void;
+  handleDrop: (e: React.DragEvent, isEdit?: boolean) => void;
+  isSubmitting: boolean;
+  handleUpdateCategory: (id: string) => void;
+  setEditingCategory: (id: string | null) => void;
+  openDeleteDialog: (id: string) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: category.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <TableRow ref={setNodeRef} style={style} key={category.id}>
+      {editingCategory !== category.id && (
+        <TableCell className='w-12'>
+          <div className='cursor-grab' {...attributes} {...listeners}>
+            <GripVertical className='h-5 w-5 text-muted-foreground' />
+          </div>
+        </TableCell>
+      )}
+      {editingCategory === category.id && (
+        <TableCell className='w-12'></TableCell>
+      )}
+      <TableCell>
+        {editingCategory === category.id ? (
+          <div className='space-y-3 w-full'>
+            <div
+              className='border-2 border-dashed rounded-md p-4 transition-colors duration-200 hover:border-primary cursor-pointer'
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, true)}
+              onClick={() => editImageInputRef.current?.click()}
+            >
+              <div className='flex flex-col items-center text-center'>
+                <Upload className='h-6 w-6 text-muted-foreground mb-1' />
+                <p className='text-xs'>Change image</p>
+              </div>
+              <Input
+                type='file'
+                accept='image/*'
+                ref={editImageInputRef}
+                onChange={handleEditImageChange}
+                className='hidden'
+              />
+            </div>
+            <div className='relative h-16 w-16 overflow-hidden rounded-md border'>
+              <img
+                src={editImagePreview || category.image}
+                alt={category.name}
+                className='object-cover h-full w-full'
+              />
+            </div>
+          </div>
+        ) : (
+          <div className='relative h-16 w-16 overflow-hidden rounded-md border'>
+            <img
+              src={category.image}
+              alt={category.name}
+              className='object-cover h-full w-full'
+            />
+          </div>
+        )}
+      </TableCell>
+      <TableCell>
+        {editingCategory === category.id ? (
+          <Input
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            className={!editName.trim() ? "border-red-300" : ""}
+          />
+        ) : (
+          <span className='font-medium'>{category.name}</span>
+        )}
+      </TableCell>
+      <TableCell className='text-right'>
+        {editingCategory === category.id ? (
+          <div className='flex gap-2 justify-end'>
+            <Button
+              size='sm'
+              onClick={() => handleUpdateCategory(category.id)}
+              disabled={isSubmitting || !editName.trim()}
+            >
+              {isSubmitting ? (
+                <Loader2 className='h-4 w-4 animate-spin' />
+              ) : (
+                <span>Save</span>
+              )}
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => setEditingCategory(null)}
+            >
+              Cancel
+            </Button>
+          </div>
+        ) : (
+          <div className='flex gap-2 justify-end'>
+            <Button
+              variant='outline'
+              size='sm'
+              className='flex items-center gap-1'
+              onClick={() => {
+                setEditingCategory(category.id);
+                setEditName(category.name);
+                setEditImage(category.image);
+                setEditImagePreview("");
+              }}
+            >
+              <Pencil className='h-4 w-4' />
+              <span className='hidden sm:inline'>Edit</span>
+            </Button>
+            <Button
+              variant='destructive'
+              size='sm'
+              className='flex items-center gap-1'
+              onClick={() => openDeleteDialog(category.id)}
+            >
+              <Trash2 className='h-4 w-4' />
+              <span className='hidden sm:inline'>Delete</span>
+            </Button>
+          </div>
+        )}
+      </TableCell>
+    </TableRow>
+  );
 }
 
 export default function CategoriesAdmin() {
@@ -67,13 +252,29 @@ export default function CategoriesAdmin() {
   const router = useRouter();
   const dropZoneRef = useRef<HTMLDivElement>(null);
 
+  // Setup dnd-kit sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   const fetchCategories = async () => {
     try {
       setLoading(true);
       const response = await fetch("/api/categories");
       if (!response.ok) throw new Error("Failed to fetch categories");
       const data = await response.json();
-      setCategories(data);
+      // Sort categories by order
+      const sortedCategories = data.sort(
+        (a: Category, b: Category) => a.order - b.order
+      );
+      setCategories(sortedCategories);
     } catch (error) {
       setError("Error loading categories");
     } finally {
@@ -215,12 +416,19 @@ export default function CategoriesAdmin() {
           "https://plus.unsplash.com/premium_photo-1673108852141-e8c3c22a4a22?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
       }
 
+      // Get highest order to add new category at the end
+      const highestOrder =
+        categories.length > 0
+          ? Math.max(...categories.map((cat) => cat.order))
+          : -1;
+
       const response = await fetch("/api/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: newCategoryName,
           image: imageUrl,
+          order: highestOrder + 1,
         }),
       });
 
@@ -298,6 +506,62 @@ export default function CategoriesAdmin() {
       fetchCategories();
     } catch (error: any) {
       setError(error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle drag end to update category order
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setCategories((categories) => {
+        // Find indices
+        const oldIndex = categories.findIndex((cat) => cat.id === active.id);
+        const newIndex = categories.findIndex((cat) => cat.id === over.id);
+
+        // Create reordered array with arrayMove
+        const newOrder = arrayMove(categories, oldIndex, newIndex);
+
+        // Update order property for each category
+        const updatedCategories = newOrder.map((cat, index) => ({
+          ...cat,
+          order: index,
+        }));
+
+        // Return updated categories
+        return updatedCategories;
+      });
+
+      // Save the new order to the database
+      saveNewCategoryOrder();
+    }
+  };
+
+  // Save the new category order to the database
+  const saveNewCategoryOrder = async () => {
+    try {
+      setIsSubmitting(true);
+
+      const orderedCategories = categories.map((cat, index) => ({
+        id: cat.id,
+        order: index,
+      }));
+
+      const response = await fetch("/api/categories/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ categories: orderedCategories }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update category order");
+      }
+
+      setSuccessMessage("Category order updated successfully");
+    } catch (error: any) {
+      setError(error.message || "Error updating category order");
     } finally {
       setIsSubmitting(false);
     }
@@ -469,128 +733,49 @@ export default function CategoriesAdmin() {
               </div>
             ) : (
               <div className='rounded-md border'>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Image</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead className='text-right'>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {categories.map((category) => (
-                      <TableRow key={category.id}>
-                        <TableCell>
-                          {editingCategory === category.id ? (
-                            <div className='space-y-3 w-full'>
-                              <div
-                                className='border-2 border-dashed rounded-md p-4 transition-colors duration-200 hover:border-primary cursor-pointer'
-                                onDragOver={handleDragOver}
-                                onDragLeave={handleDragLeave}
-                                onDrop={(e) => handleDrop(e, true)}
-                                onClick={() =>
-                                  editImageInputRef.current?.click()
-                                }
-                              >
-                                <div className='flex flex-col items-center text-center'>
-                                  <Upload className='h-6 w-6 text-muted-foreground mb-1' />
-                                  <p className='text-xs'>Change image</p>
-                                </div>
-                                <Input
-                                  type='file'
-                                  accept='image/*'
-                                  ref={editImageInputRef}
-                                  onChange={handleEditImageChange}
-                                  className='hidden'
-                                />
-                              </div>
-                              <div className='relative h-16 w-16 overflow-hidden rounded-md border'>
-                                <img
-                                  src={editImagePreview || category.image}
-                                  alt={category.name}
-                                  className='object-cover h-full w-full'
-                                />
-                              </div>
-                            </div>
-                          ) : (
-                            <div className='relative h-16 w-16 overflow-hidden rounded-md border'>
-                              <img
-                                src={category.image}
-                                alt={category.name}
-                                className='object-cover h-full w-full'
-                              />
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {editingCategory === category.id ? (
-                            <Input
-                              value={editName}
-                              onChange={(e) => setEditName(e.target.value)}
-                              className={
-                                !editName.trim() ? "border-red-300" : ""
-                              }
-                            />
-                          ) : (
-                            <span className='font-medium'>{category.name}</span>
-                          )}
-                        </TableCell>
-                        <TableCell className='text-right'>
-                          {editingCategory === category.id ? (
-                            <div className='flex gap-2 justify-end'>
-                              <Button
-                                size='sm'
-                                onClick={() =>
-                                  handleUpdateCategory(category.id)
-                                }
-                                disabled={isSubmitting || !editName.trim()}
-                              >
-                                {isSubmitting ? (
-                                  <Loader2 className='h-4 w-4 animate-spin' />
-                                ) : (
-                                  <span>Save</span>
-                                )}
-                              </Button>
-                              <Button
-                                variant='outline'
-                                size='sm'
-                                onClick={() => setEditingCategory(null)}
-                              >
-                                Cancel
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className='flex gap-2 justify-end'>
-                              <Button
-                                variant='outline'
-                                size='sm'
-                                className='flex items-center gap-1'
-                                onClick={() => {
-                                  setEditingCategory(category.id);
-                                  setEditName(category.name);
-                                  setEditImage(category.image);
-                                  setEditImagePreview("");
-                                }}
-                              >
-                                <Pencil className='h-4 w-4' />
-                                <span className='hidden sm:inline'>Edit</span>
-                              </Button>
-                              <Button
-                                variant='destructive'
-                                size='sm'
-                                className='flex items-center gap-1'
-                                onClick={() => openDeleteDialog(category.id)}
-                              >
-                                <Trash2 className='h-4 w-4' />
-                                <span className='hidden sm:inline'>Delete</span>
-                              </Button>
-                            </div>
-                          )}
-                        </TableCell>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className='w-12'></TableHead>
+                        <TableHead>Image</TableHead>
+                        <TableHead>Name</TableHead>
+                        <TableHead className='text-right'>Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <SortableContext
+                      items={categories.map((category) => category.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <TableBody>
+                        {categories.map((category) => (
+                          <SortableTableRow
+                            key={category.id}
+                            category={category}
+                            editingCategory={editingCategory}
+                            editName={editName}
+                            setEditName={setEditName}
+                            editImage={editImage}
+                            editImagePreview={editImagePreview}
+                            editImageInputRef={editImageInputRef}
+                            handleEditImageChange={handleEditImageChange}
+                            handleDragOver={handleDragOver}
+                            handleDragLeave={handleDragLeave}
+                            handleDrop={handleDrop}
+                            isSubmitting={isSubmitting}
+                            handleUpdateCategory={handleUpdateCategory}
+                            setEditingCategory={setEditingCategory}
+                            openDeleteDialog={openDeleteDialog}
+                          />
+                        ))}
+                      </TableBody>
+                    </SortableContext>
+                  </Table>
+                </DndContext>
               </div>
             )}
           </CardContent>

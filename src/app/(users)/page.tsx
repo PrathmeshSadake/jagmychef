@@ -14,6 +14,7 @@ interface Category {
   id: string;
   name: string;
   image: string;
+  order: number;
 }
 
 export default function CategoriesPage() {
@@ -31,7 +32,11 @@ export default function CategoriesPage() {
       async function fetchCategories() {
         const response = await fetch("/api/categories");
         const data = await response.json();
-        setCategories(data);
+        // Sort categories by the order field
+        const sortedCategories = data.sort(
+          (a: Category, b: Category) => a.order - b.order
+        );
+        setCategories(sortedCategories);
       }
 
       fetchCategories();
