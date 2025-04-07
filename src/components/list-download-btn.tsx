@@ -635,7 +635,7 @@ export function ListDownloadButton({ list }: ListDownloadButtonProps) {
         doc.setFontSize(14);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(66, 135, 245);
-        doc.text("Notes", marginLeft, currentY);
+        doc.text("General Appointment Notes", marginLeft, currentY);
         currentY += 10;
 
         // Reset text color

@@ -92,7 +92,7 @@ export function AdminSidebar() {
           {!collapsed && (
             <img
               src='https://1p7ctab0bz.ufs.sh/f/LSctCnwEvjMcFVrYtvday3iXw56pT1NbcA7nvkLUaYjlhdVB'
-              className='w-auto h-16 object-contain'
+              className='w-auto h-24 object-contain'
             />
           )}
         </Link>

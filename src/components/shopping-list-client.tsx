@@ -503,7 +503,7 @@ export function ShoppingListClient() {
             )}
 
             {/* General Notes from Admin */}
-            {selectedRecipeIds.length !== 0 && !isLoading && <GeneralNotes />}
+            {/* {selectedRecipeIds.length !== 0 && !isLoading && <GeneralNotes />} */}
           </>
         )}
       </div>

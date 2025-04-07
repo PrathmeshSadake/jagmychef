@@ -34,7 +34,11 @@ export async function POST(request: Request) {
     // Create recipe list HTML
     const recipeListHTML =
       recipeNames && recipeNames.length > 0
-        ? recipeNames.map((name: string) => `<li>${name}</li>`).join("")
+        ? recipeNames
+            .map(
+              (name: string, index: number) => `<li>${index + 1}. ${name}</li>`
+            )
+            .join("")
         : "<li>No recipes selected</li>";
 
     // Email HTML template with improved design and logo
@@ -81,10 +85,14 @@ export async function POST(request: Request) {
               max-width: 180px;
               height: auto;
               margin-bottom: 10px;
+              display: block;
+              margin-left: auto;
+              margin-right: auto;
             }
             
             .content {
               padding: 30px;
+              padding-top: 15px;
             }
             
             h1 {
@@ -194,9 +202,9 @@ export async function POST(request: Request) {
               
               <h2>Your Selected Recipes</h2>
               <div class="recipe-list">
-                <ul>
+                <ol>
                   ${recipeListHTML}
-                </ul>
+                </ol>
               </div>
               
               <h2>Your Shopping List</h2>
